@@ -15,6 +15,15 @@ Quick CLI
 python -m sheetdiff.cli left.xlsx right.xlsx --key id
 ```
 
+Web UI (GitHub-style diff viewer)
+
+```
+pip install xl-diff[web]
+xldiff-web
+```
+
+Open http://localhost:5000, upload two spreadsheets (optionally a key column), and view a GitHub-style row/cell diff (green = added, red = removed, yellow = modified with old value struck through above the new one).
+
 Python API
 
 ```

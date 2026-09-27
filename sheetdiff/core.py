@@ -13,8 +13,33 @@ except Exception:
 
 def _load(path: str, sheet_name: Optional[str] = None) -> pd.DataFrame:
     if str(path).lower().endswith(('.xls', '.xlsx', '.xlsm')):
-        return pd.read_excel(path, sheet_name=sheet_name, dtype=object)
+        return pd.read_excel(path, sheet_name=sheet_name if sheet_name is not None else 0, dtype=object)
     return pd.read_csv(path, dtype=object)
+
+def _col_letter(n: int) -> str:
+    """0 -> A, 25 -> Z, 26 -> AA ... (Excel-style column naming)."""
+    s = ""
+    n += 1
+    while n:
+        n, rem = divmod(n - 1, 26)
+        s = chr(65 + rem) + s
+    return s
+
+def _load_grid(path: str, sheet_name: Optional[str] = None, header: bool = False) -> pd.DataFrame:
+    """Load a sheet as a raw cell grid (no assumed header row) unless header=True.
+
+    Every spreadsheet row becomes a data row, and columns are labelled A, B, C...
+    matching real Excel column letters, so line numbers line up with actual rows.
+    """
+    is_excel = str(path).lower().endswith(('.xls', '.xlsx', '.xlsm'))
+    read_header = 0 if header else None
+    if is_excel:
+        df = pd.read_excel(path, sheet_name=sheet_name if sheet_name is not None else 0, dtype=object, header=read_header)
+    else:
+        df = pd.read_csv(path, dtype=object, header=read_header)
+    if not header:
+        df.columns = [_col_letter(i) for i in range(len(df.columns))]
+    return df
 
 def _norm(df: pd.DataFrame) -> pd.DataFrame:
     return df.fillna("").astype(str)
@@ -79,11 +104,13 @@ def diff_workbook(left: str, right: str, key: Optional[str] = None) -> Dict[str,
     left_sheets = []
     right_sheets = []
     if _is_excel(left):
-        left_sheets = pd.ExcelFile(left).sheet_names
+        with pd.ExcelFile(left) as xl:
+            left_sheets = xl.sheet_names
     else:
         left_sheets = ["sheet"]
     if _is_excel(right):
-        right_sheets = pd.ExcelFile(right).sheet_names
+        with pd.ExcelFile(right) as xl:
+            right_sheets = xl.sheet_names
     else:
         right_sheets = ["sheet"]
 
@@ -141,6 +168,66 @@ def compare_workbooks(left: str, right: str, key: Optional[str] = None) -> Dict[
             pass
 
     return diff_workbook(left, right, key=key)
+
+def diff_rows_full(left: str, right: str, key: Optional[str] = None, sheet_name: Optional[str] = None, header: bool = False) -> Dict[str, Any]:
+    """Full row-level diff for GitHub-style rendering.
+
+    By default every spreadsheet row is treated as data (no assumed header row),
+    so line numbers match real Excel row numbers and columns are labelled A, B, C...
+    Pass header=True to treat row 1 as column names instead (then `key` is a column name).
+
+    Returns {"columns": [...], "rows": [{"status": "unchanged"|"added"|"removed"|"modified",
+    "left": {col: val}, "right": {col: val}, "changed": [col, ...]}, ...]}.
+    """
+    L = _norm(_load_grid(left, sheet_name, header=header))
+    R = _norm(_load_grid(right, sheet_name, header=header))
+    columns = list(dict.fromkeys(list(L.columns) + list(R.columns)))
+    rows: List[Dict[str, Any]] = []
+
+    def row_dict(row, key_val=None) -> Dict[str, str]:
+        d = {c: str(row.get(c, "")) for c in columns}
+        if key_val is not None:
+            d[key] = str(key_val)
+        return d
+
+    if key and key in L.columns and key in R.columns:
+        L2, R2 = L.set_index(key), R.set_index(key)
+        for k in sorted(set(L2.index) | set(R2.index)):
+            inL, inR = k in L2.index, k in R2.index
+            if inL and not inR:
+                rows.append({"status": "removed", "left": row_dict(L2.loc[k], k), "right": None, "changed": []})
+            elif inR and not inL:
+                rows.append({"status": "added", "left": None, "right": row_dict(R2.loc[k], k), "changed": []})
+            else:
+                lrow, rrow = row_dict(L2.loc[k], k), row_dict(R2.loc[k], k)
+                changed = [c for c in columns if lrow.get(c) != rrow.get(c)]
+                rows.append({"status": "modified" if changed else "unchanged", "left": lrow, "right": rrow, "changed": changed})
+    else:
+        maxr = max(len(L), len(R))
+        for i in range(maxr):
+            if i >= len(L):
+                rows.append({"status": "added", "left": None, "right": row_dict(R.iloc[i]), "changed": []}); continue
+            if i >= len(R):
+                rows.append({"status": "removed", "left": row_dict(L.iloc[i]), "right": None, "changed": []}); continue
+            lrow, rrow = row_dict(L.iloc[i]), row_dict(R.iloc[i])
+            changed = [c for c in columns if lrow.get(c) != rrow.get(c)]
+            rows.append({"status": "modified" if changed else "unchanged", "left": lrow, "right": rrow, "changed": changed})
+
+    old_ln = new_ln = 0
+    for r in rows:
+        if r["status"] in ("removed", "modified", "unchanged"):
+            old_ln += 1
+            r["old_line"] = old_ln
+        else:
+            r["old_line"] = None
+        if r["status"] in ("added", "modified", "unchanged"):
+            new_ln += 1
+            r["new_line"] = new_ln
+        else:
+            r["new_line"] = None
+
+    return {"columns": columns, "rows": rows}
+
 
 def format_unified(changes: List[Change]) -> str:
     out: List[str] = []
