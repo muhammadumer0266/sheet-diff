@@ -1,16 +1,24 @@
 """Web UI: upload two or more spreadsheets, view a GitHub/VSCode-style diff.
 
+Files can either be uploaded directly or referenced by a remote URI
+(s3://, minio://, r2://, garage://, az:///azure://) — see storage.py and
+config.py for how remote credentials and size limits are configured.
+
 Run: python -m sheetdiff.webapp
 """
 import os
 import tempfile
 from flask import Flask, request, render_template
 
-from .core import diff_rows_full, diff_multi_grid, _is_excel
+from . import config, storage
+from .core import diff_rows_full, _is_excel
 import pandas as pd
 
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
+# Total request body cap. This bounds *uploaded* bytes; remote downloads are
+# capped separately and independently via config.MAX_REMOTE_BYTES, since
+# they never pass through the request body.
+app.config["MAX_CONTENT_LENGTH"] = config.MAX_UPLOAD_BYTES
 
 
 def _build_items(rows, context=3):
@@ -51,24 +59,63 @@ def _sheet_names(path: str):
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        remote_enabled=bool(config.ALLOWED_REMOTE_SCHEMES),
+        allowed_schemes=sorted(config.ALLOWED_REMOTE_SCHEMES),
+        max_upload_mb=config.MAX_UPLOAD_MB,
+        max_remote_mb=config.MAX_REMOTE_MB,
+        max_files=config.MAX_FILES,
+    )
 
 
 @app.route("/diff", methods=["POST"])
 def diff():
     uploads = request.files.getlist("files")
-    if len(uploads) < 2:
-        return "At least two files are required.", 400
+    remote_refs = request.form.getlist("remote_refs")
+    # Every row submits both a (possibly empty) file part and a (possibly
+    # empty) remote_refs entry, so the two lists line up 1:1 by row.
+    if len(remote_refs) < len(uploads):
+        remote_refs = remote_refs + [""] * (len(uploads) - len(remote_refs))
+
+    slots = []  # list of (source, display_name) where source is a FileStorage or a remote URI string
+    for f, ref in zip(uploads, remote_refs):
+        ref = (ref or "").strip()
+        if ref:
+            slots.append((ref, ref))
+        elif f and f.filename:
+            slots.append((f, f.filename))
+
+    if len(slots) < 2:
+        return "At least two files (uploaded or remote) are required.", 400
+    if len(slots) > config.MAX_FILES:
+        return (
+            f"Too many files: {len(slots)} given, {config.MAX_FILES} allowed "
+            "(configure via SHEETDIFF_MAX_FILES).",
+            400,
+        )
     key = request.form.get("key") or None
     header = bool(request.form.get("header"))
 
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         paths, names = [], []
-        for i, f in enumerate(uploads):
-            p = os.path.join(tmp, f"{i}_{f.filename}")
-            f.save(p)
-            paths.append(p)
-            names.append(f.filename)
+        try:
+            for i, (source, name) in enumerate(slots):
+                if isinstance(source, str):
+                    p = storage.resolve(source, tmp, max_bytes=config.MAX_REMOTE_BYTES)
+                else:
+                    p = os.path.join(tmp, f"{i}_{source.filename}")
+                    source.save(p)
+                paths.append(p)
+                names.append(name)
+        except storage.MissingDependencyError as e:
+            return str(e), 501
+        except storage.SchemeNotAllowedError as e:
+            return str(e), 400
+        except storage.RemoteFileTooLargeError as e:
+            return str(e), 413
+        except storage.StorageError as e:
+            return str(e), 400
 
         sheet_lists = [_sheet_names(p) for p in paths]
 
@@ -103,25 +150,21 @@ def diff():
                     pair_sheets[s] = {"columns": [], "rows": [], "diff_items": [], "error": str(e), "sheet_status": "both"}
             pairs.append({"left_name": names[i], "right_name": names[i + 1], "sheets": pair_sheets})
 
-        # --- Split view: N-way grid per sheet ---
-        multi_sheets = {}
-        for s in all_sheets:
-            present = presence[s]
-            try:
-                g = diff_multi_grid(paths, present, key=key, sheet_name=s, header=header)
-                g["present"] = present
-                g["diff_rows"] = sum(1 for r in g["rows"] if r["status"] == "diff")
-                multi_sheets[s] = g
-            except Exception as e:
-                multi_sheets[s] = {"columns": [], "rows": [], "present": present, "error": str(e)}
-
     return render_template(
         "diff.html",
         file_names=names,
         pairs=pairs,
-        all_sheets=all_sheets,
-        multi_sheets=multi_sheets,
         multi_file=len(paths) > 2,
+    )
+
+
+@app.errorhandler(413)
+def too_large(_e):
+    return (
+        f"Upload too large. The server accepts at most {config.MAX_UPLOAD_MB} MB "
+        "per request (configure via SHEETDIFF_MAX_UPLOAD_MB), or use a remote:// "
+        "URI so the file doesn't have to pass through the browser.",
+        413,
     )
 
 

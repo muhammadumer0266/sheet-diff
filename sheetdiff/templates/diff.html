@@ -5,32 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>xl-diff — {{ file_names | join(' vs ') }}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f8fa; --panel: #ffffff; --header: #ffffff; --border: #d0d7de;
-    --text: #1f2328; --muted: #656d76; --gutter: #8c959f;
-    --add-bg: #dafbe1; --add-bg-strong: #aceebb; --add-fg: #1a7f37;
-    --del-bg: #ffebe9; --del-bg-strong: #ffc1bc; --del-fg: #cf222e;
-    --hunk-bg: #ddf4ff; --hunk-fg: #0969da; --mod-fg: #9a6700;
-    --accent: #0969da; --base-bg: rgba(9,105,218,.08);
+    --bg: #eef2e9; --panel: #fffefb; --header: #f4f7f0; --border: #cbdac5;
+    --text: #16241a; --muted: #5c6d5e; --gutter: #7c8c7c;
+    --add-bg: #e2ede4; --add-bg-strong: #bfe0cc; --add-fg: #1f5c45;
+    --del-bg: #f4e4e0; --del-bg-strong: #eec4b9; --del-fg: #7a2e2e;
+    --hunk-bg: #f1e6cf; --hunk-fg: #8a6a24; --mod-fg: #a97a2c;
+    --accent: #1f6f4d; --brass: #a97a2c; --empty-hatch: rgba(92,109,94,.07);
   }
   :root[data-theme="dark"] {
-    --bg: #0d1117; --panel: #0d1117; --header: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --gutter: #6e7681;
-    --add-bg: rgba(46,160,67,.15); --add-bg-strong: rgba(46,160,67,.4); --add-fg: #3fb950;
-    --del-bg: rgba(248,81,73,.15); --del-bg-strong: rgba(248,81,73,.4); --del-fg: #f85149;
-    --hunk-bg: rgba(56,139,253,.15); --hunk-fg: #58a6ff; --mod-fg: #d29922;
-    --accent: #58a6ff; --base-bg: rgba(88,166,255,.08);
+    --bg: #0b120d; --panel: #101a12; --header: #142017; --border: #223a2a;
+    --text: #e9f1e6; --muted: #8fa38f; --gutter: #6f8571;
+    --add-bg: rgba(55,168,119,.15); --add-bg-strong: rgba(55,168,119,.4); --add-fg: #63cf9c;
+    --del-bg: rgba(226,147,138,.15); --del-bg-strong: rgba(226,147,138,.4); --del-fg: #e2938a;
+    --hunk-bg: rgba(216,180,99,.14); --hunk-fg: #d8b463; --mod-fg: #d8b463;
+    --accent: #37a877; --brass: #d8b463; --empty-hatch: rgba(255,255,255,.03);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0d1117; --panel: #0d1117; --header: #161b22; --border: #30363d;
-      --text: #e6edf3; --muted: #8b949e; --gutter: #6e7681;
-      --add-bg: rgba(46,160,67,.15); --add-bg-strong: rgba(46,160,67,.4); --add-fg: #3fb950;
-      --del-bg: rgba(248,81,73,.15); --del-bg-strong: rgba(248,81,73,.4); --del-fg: #f85149;
-      --hunk-bg: rgba(56,139,253,.15); --hunk-fg: #58a6ff; --mod-fg: #d29922;
-      --accent: #58a6ff; --base-bg: rgba(88,166,255,.08);
+      --bg: #0b120d; --panel: #101a12; --header: #142017; --border: #223a2a;
+      --text: #e9f1e6; --muted: #8fa38f; --gutter: #6f8571;
+      --add-bg: rgba(55,168,119,.15); --add-bg-strong: rgba(55,168,119,.4); --add-fg: #63cf9c;
+      --del-bg: rgba(226,147,138,.15); --del-bg-strong: rgba(226,147,138,.4); --del-fg: #e2938a;
+      --hunk-bg: rgba(216,180,99,.14); --hunk-fg: #d8b463; --mod-fg: #d8b463;
+      --accent: #37a877; --brass: #d8b463; --empty-hatch: rgba(255,255,255,.03);
     }
   }
   * { box-sizing: border-box; }
@@ -41,13 +42,17 @@
     position: sticky; top: 0; z-index: 30; background: var(--header); border-bottom: 1px solid var(--border);
     padding: 10px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   }
+  header.top::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--brass), var(--accent));
+  }
   a.back { color: var(--muted); text-decoration: none; font-size: 12.5px; font-weight: 500; }
   a.back:hover { color: var(--accent); }
   .filepath { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .filepath .chip { display: flex; align-items: center; gap: 5px; }
   .filepath .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  .dot.c0 { background: var(--del-fg); } .dot.c1 { background: var(--add-fg); } .dot.c2 { background: #d29922; }
-  .dot.c3 { background: #8957e5; } .dot.c4 { background: #bf3989; }
+  .dot.c0 { background: var(--del-fg); } .dot.c1 { background: var(--add-fg); } .dot.c2 { background: var(--brass); }
+  .dot.c3 { background: #6c6ba0; } .dot.c4 { background: #a0527c; }
   .filepath .sep { color: var(--muted); }
 
   .view-toggle { display: flex; gap: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
@@ -55,9 +60,9 @@
     border: none; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 6px;
     font-size: 12.5px; font-weight: 600; cursor: pointer;
   }
-  .view-toggle button.active { background: var(--accent); color: #fff; }
+  .view-toggle button.active { background: var(--accent); color: #fdfaf1; }
 
-  .theme-toggle { border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  .theme-toggle { border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 13px; }
   .stat { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
   .stat .add { color: var(--add-fg); } .stat .del { color: var(--del-fg); }
 
@@ -70,7 +75,7 @@
   .tab.active { background: var(--bg); color: var(--text); border-color: var(--border); border-bottom-color: var(--bg); }
   .tab:hover:not(.active) { color: var(--text); }
   .tab .cnt .add { color: var(--add-fg); } .tab .cnt .del { color: var(--del-fg); }
-  .tab .sheet-badge { font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-left: 6px; color: #fff; }
+  .tab .sheet-badge { font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-left: 6px; color: #fdfaf1; }
   .sheet-badge.added { background: var(--add-fg); } .sheet-badge.removed { background: var(--del-fg); }
 
   .pane { display: none; flex: 1; min-height: 0; flex-direction: column; }
@@ -80,12 +85,12 @@
 
   .panel { background: var(--panel); flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .scroll { overflow: auto; flex: 1; min-height: 0; }
-  table { border-collapse: collapse; width: 100%; min-width: max-content; }
+  table { border-collapse: collapse; width: 100%; table-layout: fixed; }
 
   td, th { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 20px; padding: 0 10px; white-space: pre; vertical-align: top; }
   td.gutter { width: 44px; min-width: 44px; text-align: right; color: var(--gutter); user-select: none; padding: 0 8px; }
   td.marker { width: 20px; min-width: 20px; text-align: center; user-select: none; font-weight: 600; }
-  td.content { width: 100%; }
+  td.content { width: 100%; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
 
   tr.line-add td.gutter.new, tr.line-add td.marker, tr.line-add td.content { background: var(--add-bg); }
   tr.line-add td.marker { color: var(--add-fg); }
@@ -110,15 +115,42 @@
   .sheet-banner { padding: 8px 16px; font-size: 12px; color: var(--muted); background: var(--hunk-bg); border-bottom: 1px solid var(--border); }
   .sheet-banner b { color: var(--text); }
 
-  /* split (multi-file) view */
-  .group-head { position: sticky; top: 0; background: var(--header); z-index: 5; }
-  .group-head th { text-align: left; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); border-bottom: 1px solid var(--border); padding: 8px 10px; }
-  .group-head th.base { color: var(--accent); }
-  th.file-sep, td.file-sep { width: 8px; background: var(--border); padding: 0; }
-  td.miss { color: var(--muted); font-style: italic; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(128,128,128,.06) 6px, rgba(128,128,128,.06) 12px); }
-  td.cell-base { background: var(--base-bg); }
-  td.cell-diff { background: var(--del-bg-strong); }
-  tr.row-diff td.gutter { color: var(--mod-fg); font-weight: 600; }
+  /* ============ split (VS Code style side-by-side, synced scroll) view ============ */
+  .split-sync-group { display: flex; flex: 1; min-height: 0; }
+  .split-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+  .split-pane:last-child { border-right: none; }
+  .split-pane-head {
+    position: sticky; top: 0; z-index: 5; background: var(--header);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    padding: 7px 10px; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace;
+  }
+  .split-pane-head.old-file { color: var(--del-fg); }
+  .split-pane-head.new-file { color: var(--add-fg); }
+  .split-scroll { overflow: auto; flex: 1; min-height: 0; }
+
+  table.split-single { border-collapse: collapse; width: 100%; min-width: max-content; }
+  table.split-single td.content { white-space: pre; width: auto; }
+
+  tr.sline-add td { background: var(--add-bg); }
+  tr.sline-add td.marker { color: var(--add-fg); }
+  tr.sline-del td { background: var(--del-bg); }
+  tr.sline-del td.marker { color: var(--del-fg); }
+  tr.sline-mod-old td { background: var(--del-bg); }
+  tr.sline-mod-old td.marker { color: var(--mod-fg); }
+  tr.sline-mod-new td { background: var(--add-bg); }
+  tr.sline-mod-new td.marker { color: var(--mod-fg); }
+  tr.sline-mod-old span.seg.hl { background: var(--del-bg-strong); }
+  tr.sline-mod-new span.seg.hl { background: var(--add-bg-strong); }
+
+  td.sline-empty {
+    background: repeating-linear-gradient(135deg, transparent, transparent 7px, var(--empty-hatch) 7px, var(--empty-hatch) 14px);
+  }
+
+  tr.sp-hunk td, tr.sp-fold td { background: var(--hunk-bg); color: var(--hunk-fg); font-weight: 500; padding-top: 3px; padding-bottom: 3px; }
+  tr.sp-fold td { cursor: pointer; padding-top: 4px; padding-bottom: 4px; opacity: .85; }
+  tr.sp-fold:hover td { opacity: 1; }
+  tr.sp-fold .fold-icon { display: inline-block; margin-right: 6px; transition: transform .12s; }
+  tr.sp-fold.expanded .fold-icon { transform: rotate(90deg); }
 </style>
 </head>
 <body>
@@ -248,64 +280,146 @@
   {% endfor %}
 </div>
 
-<!-- ============ SPLIT VIEW ============ -->
+<!-- ============ SPLIT VIEW (VS Code style side-by-side) ============ -->
 <div class="view-root" id="view-split">
-  <nav class="tabs" id="split-tabs">
-    {% for sheet_name in all_sheets %}
-      {% set g = multi_sheets[sheet_name] %}
-      <button class="tab {{ 'active' if loop.first else '' }}" onclick="showSplitSheet('{{ loop.index0 }}')">
-        {{ sheet_name }}
-        {% if g.diff_rows %}<span class="cnt"><span class="del">~{{ g.diff_rows }}</span></span>{% endif %}
-        {% if g.present and not (g.present | select | list | length == g.present | length) %}
-          <span class="sheet-badge removed">PARTIAL</span>
-        {% endif %}
-      </button>
+  {% if multi_file %}
+  <nav class="tabs" id="split-pair-tabs">
+    {% for pair in pairs %}
+      <button class="tab {{ 'active' if loop.first else '' }}" onclick="showSplitPair('{{ loop.index0 }}')">{{ pair.left_name }} &rarr; {{ pair.right_name }}</button>
     {% endfor %}
   </nav>
+  {% endif %}
 
-  {% for sheet_name in all_sheets %}
-  {% set g = multi_sheets[sheet_name] %}
-  <section class="pane {{ 'active' if loop.first else '' }}" id="split-sheet-{{ loop.index0 }}">
-    <div class="panel">
-      {% if g.get('error') %}
-        <div class="error">Error: {{ g.error }}</div>
-      {% elif g.rows|length == 0 %}
-        <div class="empty">No rows in this sheet.</div>
-      {% else %}
-      <div class="scroll">
-      <table>
-        <thead>
-        <tr class="group-head">
-          <th class="gutter" style="position:sticky;left:0;"></th>
-          {% for n in file_names %}
-            <th class="{{ 'base' if loop.first else '' }}">{{ n }}{% if loop.first %} (base){% endif %}</th>
-            {% if not loop.last %}<th class="file-sep"></th>{% endif %}
-          {% endfor %}
-        </tr>
-        </thead>
-        <tbody>
-        {% for row in g.rows %}
-          <tr class="{{ 'row-diff' if row.status == 'diff' else '' }}">
-            <td class="gutter">{{ row.line if row.line is number else row.line }}</td>
-            {% for val in row.cells %}
-              {% set fi = loop.index0 %}
-              {% if val is none %}
-                <td class="miss" colspan="1">{{ '(sheet missing)' if not g.present[fi] else '(row missing)' }}</td>
-              {% else %}
-                <td class="{{ 'cell-base' if fi == 0 else '' }} {{ 'cell-diff' if row.status == 'diff' else '' }}">
-                  {% for c in g.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ val.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}
-                </td>
-              {% endif %}
-              {% if not loop.last %}<td class="file-sep"></td>{% endif %}
-            {% endfor %}
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+  {% for pair in pairs %}
+  <div class="pane {{ 'active' if loop.first else '' }}" id="split-pair-{{ loop.index0 }}">
+    <nav class="tabs">
+      {% for sheet_name, d in pair.sheets.items() %}
+        <button class="tab {{ 'active' if loop.first else '' }}" onclick="showSheet(this, '{{ loop.index0 }}')">
+          {{ sheet_name }}
+          {% if d.sheet_status == 'added' %}<span class="sheet-badge added">NEW</span>{% endif %}
+          {% if d.sheet_status == 'removed' %}<span class="sheet-badge removed">DELETED</span>{% endif %}
+          {% if d.added or d.removed or d.modified %}
+            <span class="cnt">
+              {% if d.added or d.modified %}<span class="add">+{{ d.added + d.modified }}</span>{% endif %}
+              {% if d.removed or d.modified %}<span class="del">-{{ d.removed + d.modified }}</span>{% endif %}
+            </span>
+          {% endif %}
+        </button>
+      {% endfor %}
+    </nav>
+
+    {% for sheet_name, d in pair.sheets.items() %}
+    <section class="pane {{ 'active' if loop.first else '' }}" data-sheet-pane>
+      <div class="panel">
+        {% if d.sheet_status == 'added' %}
+          <div class="sheet-banner">Sheet <b>{{ sheet_name }}</b> was added in {{ pair.right_name }}.</div>
+        {% elif d.sheet_status == 'removed' %}
+          <div class="sheet-banner">Sheet <b>{{ sheet_name }}</b> was deleted (present only in {{ pair.left_name }}).</div>
+        {% endif %}
+        {% if d.get('error') %}
+          <div class="error">Error: {{ d.error }}</div>
+        {% elif d.rows|length == 0 %}
+          <div class="empty">No rows in this sheet.</div>
+        {% else %}
+        <div class="split-sync-group">
+          <div class="split-pane">
+            <div class="split-pane-head old-file">{{ pair.left_name }}</div>
+            <div class="split-scroll">
+              <table class="split-single"><tbody>
+              {% for item in d.diff_items %}
+                {% if item.type == 'hunk' %}
+                <tr class="sp-hunk" data-fold-idx="{{ loop.index0 }}">
+                  <td class="gutter"></td><td class="marker"></td>
+                  <td class="content">@@ -{{ item.old_line }} @@</td>
+                </tr>
+                {% elif item.type == 'fold' %}
+                <tr class="sp-fold" data-fold-idx="{{ loop.index0 }}" onclick="toggleSplitFold(this)">
+                  <td class="gutter"></td><td class="marker"></td>
+                  <td class="content"><span class="fold-icon">&#9656;</span>{{ item.count }} unchanged row{{ 's' if item.count != 1 else '' }}</td>
+                </tr>
+                {% for row in item.rows %}
+                  <tr class="hidden-row" data-fold-idx="{{ loop.index0 }}">
+                    <td class="gutter">{{ row.old_line or '' }}</td><td class="marker"></td>
+                    <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ (row.left or row.right).get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                {% endfor %}
+                {% elif item.type == 'row' %}
+                  {% set row = item.row %}
+                  {% if row.status == 'added' %}
+                  <tr><td class="gutter"></td><td class="marker"></td><td class="content sline-empty"></td></tr>
+                  {% elif row.status == 'removed' %}
+                  <tr class="sline-del">
+                    <td class="gutter">{{ row.old_line }}</td><td class="marker">-</td>
+                    <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                  {% elif row.status == 'modified' %}
+                  <tr class="sline-mod-old">
+                    <td class="gutter">{{ row.old_line }}</td><td class="marker">-</td>
+                    <td class="content">{% for c in d.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td class="gutter">{{ row.old_line }}</td><td class="marker"></td>
+                    <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              </tbody></table>
+            </div>
+          </div>
+          <div class="split-pane">
+            <div class="split-pane-head new-file">{{ pair.right_name }}</div>
+            <div class="split-scroll">
+              <table class="split-single"><tbody>
+              {% for item in d.diff_items %}
+                {% if item.type == 'hunk' %}
+                <tr class="sp-hunk" data-fold-idx="{{ loop.index0 }}">
+                  <td class="gutter"></td><td class="marker"></td>
+                  <td class="content">@@ +{{ item.new_line }} @@</td>
+                </tr>
+                {% elif item.type == 'fold' %}
+                <tr class="sp-fold" data-fold-idx="{{ loop.index0 }}" onclick="toggleSplitFold(this)">
+                  <td class="gutter"></td><td class="marker"></td>
+                  <td class="content"><span class="fold-icon">&#9656;</span>{{ item.count }} unchanged row{{ 's' if item.count != 1 else '' }}</td>
+                </tr>
+                {% for row in item.rows %}
+                  <tr class="hidden-row" data-fold-idx="{{ loop.index0 }}">
+                    <td class="gutter">{{ row.new_line or '' }}</td><td class="marker"></td>
+                    <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ (row.left or row.right).get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                {% endfor %}
+                {% elif item.type == 'row' %}
+                  {% set row = item.row %}
+                  {% if row.status == 'removed' %}
+                  <tr><td class="gutter"></td><td class="marker"></td><td class="content sline-empty"></td></tr>
+                  {% elif row.status == 'added' %}
+                  <tr class="sline-add">
+                    <td class="gutter">{{ row.new_line }}</td><td class="marker">+</td>
+                    <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                  {% elif row.status == 'modified' %}
+                  <tr class="sline-mod-new">
+                    <td class="gutter">{{ row.new_line }}</td><td class="marker">+</td>
+                    <td class="content">{% for c in d.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td class="gutter">{{ row.new_line }}</td><td class="marker"></td>
+                    <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+                  </tr>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              </tbody></table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
-      {% endif %}
-    </div>
-  </section>
+    </section>
+    {% endfor %}
+  </div>
   {% endfor %}
 </div>
 
@@ -321,6 +435,11 @@
     document.querySelectorAll('#view-unified > .pane').forEach(function (el) { el.classList.remove('active'); });
     document.getElementById('pair-' + idx).classList.add('active');
   }
+  function showSplitPair(idx) {
+    document.querySelectorAll('#split-pair-tabs .tab').forEach(function (el, i) { el.classList.toggle('active', String(i) === String(idx)); });
+    document.querySelectorAll('#view-split > .pane').forEach(function (el) { el.classList.remove('active'); });
+    document.getElementById('split-pair-' + idx).classList.add('active');
+  }
   function showSheet(btn, idx) {
     const nav = btn.closest('nav');
     const panesContainer = nav.parentElement;
@@ -330,10 +449,6 @@
       el.classList.toggle('active', String(i) === String(idx));
     });
   }
-  function showSplitSheet(idx) {
-    document.querySelectorAll('#split-tabs .tab').forEach(function (el, i) { el.classList.toggle('active', String(i) === String(idx)); });
-    document.querySelectorAll('#view-split > .pane').forEach(function (el, i) { el.classList.toggle('active', String(i) === String(idx)); });
-  }
   function toggleFold(el) {
     el.classList.toggle('expanded');
     var row = el.nextElementSibling;
@@ -342,6 +457,38 @@
       row = row.nextElementSibling;
     }
   }
+  function toggleSplitFold(el) {
+    const willExpand = !el.classList.contains('expanded');
+    const idx = el.getAttribute('data-fold-idx');
+    const group = el.closest('.split-sync-group');
+    group.querySelectorAll('.sp-fold[data-fold-idx="' + idx + '"]').forEach(function (foldEl) {
+      foldEl.classList.toggle('expanded', willExpand);
+      var row = foldEl.nextElementSibling;
+      while (row && row.getAttribute('data-fold-idx') === idx) {
+        row.style.display = willExpand ? 'table-row' : 'none';
+        row = row.nextElementSibling;
+      }
+    });
+  }
+  function syncScrollPanes(a, b) {
+    let guardA = false, guardB = false;
+    a.addEventListener('scroll', function () {
+      if (guardA) { guardA = false; return; }
+      guardB = true;
+      b.scrollLeft = a.scrollLeft;
+      b.scrollTop = a.scrollTop;
+    });
+    b.addEventListener('scroll', function () {
+      if (guardB) { guardB = false; return; }
+      guardA = true;
+      a.scrollLeft = b.scrollLeft;
+      a.scrollTop = b.scrollTop;
+    });
+  }
+  document.querySelectorAll('.split-sync-group').forEach(function (group) {
+    const scrolls = group.querySelectorAll(':scope > .split-pane > .split-scroll');
+    if (scrolls.length === 2) syncScrollPanes(scrolls[0], scrolls[1]);
+  });
   function applyTheme(t) {
     if (t) document.documentElement.setAttribute('data-theme', t);
     else document.documentElement.removeAttribute('data-theme');

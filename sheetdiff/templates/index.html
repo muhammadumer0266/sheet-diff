@@ -5,89 +5,185 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>xl-diff</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f8fa; --bg-page: #eef2ff; --card: #ffffff; --border: #d0d7de;
-    --text: #1f2328; --muted: #656d76; --accent: #2563eb; --accent-dark: #1d4ed8;
-    --radius: 12px; --del-fg: #cf222e; --add-fg: #1a7f37;
+    --bg-a: #eef2e9; --bg-b: #e2eadd;
+    --card: #fffefb; --card-2: #f4f7f0;
+    --border: #cbdac5; --border-soft: #e0e8da;
+    --text: #16241a; --muted: #5c6d5e;
+    --emerald: #1f6f4d; --emerald-2: #123f2b; --emerald-soft: #3f9c6e;
+    --brass: #a97a2c; --brass-soft: #c99c4a;
+    --ink: #fdfaf1;
+    --del: #7a2e2e; --del-bg: #f4e4e0;
+    --add: #1f5c45; --add-bg: #e2ede4;
+    --radius: 16px; --radius-sm: 10px;
+    --shadow: 0 20px 60px -20px rgba(10, 26, 17, 0.35), 0 2px 8px rgba(10,26,17,.08);
   }
   :root[data-theme="dark"] {
-    --bg: #0d1117; --bg-page: #0d1117; --card: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --accent-dark: #388bfd;
-    --del-fg: #f85149; --add-fg: #3fb950;
+    --bg-a: #0b120d; --bg-b: #070a07;
+    --card: #101a12; --card-2: #142017;
+    --border: #223a2a; --border-soft: #1a2a1e;
+    --text: #e9f1e6; --muted: #8fa38f;
+    --emerald: #37a877; --emerald-2: #1f6f4d; --emerald-soft: #63cf9c;
+    --brass: #d8b463; --brass-soft: #eccb84;
+    --ink: #0c1710;
+    --del: #e2938a; --del-bg: #2c1c1a;
+    --add: #8fcdad; --add-bg: #17251d;
+    --shadow: 0 20px 60px -20px rgba(0,0,0,.65), 0 2px 8px rgba(0,0,0,.3);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0d1117; --bg-page: #0d1117; --card: #161b22; --border: #30363d;
-      --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --accent-dark: #388bfd;
-      --del-fg: #f85149; --add-fg: #3fb950;
+      --bg-a: #0b120d; --bg-b: #070a07;
+      --card: #101a12; --card-2: #142017;
+      --border: #223a2a; --border-soft: #1a2a1e;
+      --text: #e9f1e6; --muted: #8fa38f;
+      --emerald: #37a877; --emerald-2: #1f6f4d; --emerald-soft: #63cf9c;
+      --brass: #d8b463; --brass-soft: #eccb84;
+      --ink: #0c1710;
+      --del: #e2938a; --del-bg: #2c1c1a;
+      --add: #8fcdad; --add-bg: #17251d;
+      --shadow: 0 20px 60px -20px rgba(0,0,0,.65), 0 2px 8px rgba(0,0,0,.3);
     }
   }
   * { box-sizing: border-box; }
   body {
     font-family: 'Inter', -apple-system, Segoe UI, sans-serif;
-    background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg) 320px);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--emerald) 12%, transparent), transparent),
+      radial-gradient(900px 500px at 100% 10%, color-mix(in srgb, var(--brass) 10%, transparent), transparent),
+      linear-gradient(180deg, var(--bg-a), var(--bg-b));
+    background-attachment: fixed;
     color: var(--text); margin: 0; min-height: 100vh;
-    display: flex; align-items: center; justify-content: center; padding: 24px;
+    display: flex; align-items: center; justify-content: center; padding: 32px 20px;
   }
   .theme-toggle {
-    position: fixed; top: 16px; right: 16px; background: var(--card);
-    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
-    cursor: pointer; font-size: 13px; color: var(--text);
+    position: fixed; top: 18px; right: 18px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 999px; padding: 8px 14px;
+    cursor: pointer; font-size: 13px; color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,.08);
+    transition: transform .15s ease, border-color .15s ease;
   }
+  .theme-toggle:hover { transform: translateY(-1px); border-color: var(--brass); }
+
   .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15); padding: 40px; width: 100%; max-width: 520px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 44px 44px 40px; width: 100%; max-width: 560px;
+    position: relative;
+    overflow: hidden;
   }
-  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--brass), var(--emerald-soft), var(--emerald));
+  }
+
+  .logo { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
   .logo-badge {
-    width: 34px; height: 34px; border-radius: 8px;
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 15px;
+    width: 46px; height: 46px; border-radius: 10px;
+    background: linear-gradient(155deg, var(--emerald-2), var(--emerald) 55%, var(--emerald-2));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--brass-soft); font-weight: 700; font-size: 18px;
+    font-family: 'Cormorant Garamond', serif;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 6px 16px -6px rgba(18,63,43,.6);
   }
-  h1 { font-size: 20px; margin: 0; }
-  .sub { color: var(--muted); font-size: 14px; margin: 6px 0 28px; }
-  .drop {
-    border: 1.5px dashed var(--border); border-radius: 10px; padding: 16px;
+  h1 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 700;
+    font-size: 32px; margin: 0; letter-spacing: .01em;
   }
-  .file-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .file-row input[type=file] {
-    flex: 1; font-size: 13px; padding: 8px; border: 1px solid var(--border);
-    border-radius: 8px; background: var(--bg); color: var(--text);
+  .sub {
+    color: var(--muted); font-size: 14.5px; margin: 10px 0 30px;
+    font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 500;
   }
-  .file-row .badge {
-    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; color: white; min-width: 42px; text-align: center;
+
+  .section-label {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600;
   }
-  .file-row:nth-child(1) .badge { background: var(--del-fg); }
-  .file-row:not(:first-child) .badge { background: var(--add-fg); }
+  .section-label::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+
+  .drop { display: flex; flex-direction: column; gap: 12px; }
+
+  .file-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .file-row.dragover { border-color: var(--emerald); box-shadow: 0 0 0 3px color-mix(in srgb, var(--emerald) 18%, transparent); }
+
+  .badge {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; color: #fff; min-width: 48px; text-align: center; flex-shrink: 0;
+  }
+  .file-row:nth-child(1) .badge { background: linear-gradient(135deg, var(--del), #9a4a44); }
+  .file-row:not(:first-child) .badge { background: linear-gradient(135deg, var(--add), #2c7a5c); }
+
+  .pick-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; border: 1px dashed var(--border);
+    color: var(--text); font-size: 12.5px; font-weight: 600;
+    padding: 8px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .pick-btn:hover { border-color: var(--brass); color: var(--brass); }
+  .file-row input[type=file] { display: none; }
+
+  .file-name {
+    flex: 1; min-width: 0; font-size: 13px; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .file-name.has-file { color: var(--text); font-weight: 500; }
+
+  .row-or { color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0; }
+  input[type=text].remote-url {
+    flex: 1; min-width: 100px; font-size: 12.5px; padding: 8px 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    border: 1px solid var(--border-soft); border-radius: 8px; background: var(--card); color: var(--text);
+  }
+
   .remove-file {
-    border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px;
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+    font-size: 18px; line-height: 1; padding: 4px 6px; border-radius: 6px; flex-shrink: 0;
+    transition: color .15s ease, background .15s ease;
   }
-  .remove-file:hover { color: var(--del-fg); }
+  .remove-file:hover { color: var(--del); background: var(--del-bg); }
+
   .add-file {
-    margin-top: 4px; background: transparent; border: 1px dashed var(--border); color: var(--accent);
-    padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;
+    margin-top: 2px; background: transparent; border: 1px dashed var(--border); color: var(--emerald);
+    padding: 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;
+    transition: border-color .15s ease, background .15s ease;
   }
-  .add-file:hover { border-color: var(--accent); }
+  .add-file:hover { border-color: var(--emerald); background: color-mix(in srgb, var(--emerald) 6%, transparent); }
+
   label { display: block; font-weight: 600; font-size: 13px; }
-  input[type=text] {
-    display: block; margin-top: 8px; width: 100%; padding: 9px 12px;
-    border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text);
+  input[type=text]:not(.remote-url) {
+    display: block; margin-top: 8px; width: 100%; padding: 10px 13px;
+    border: 1px solid var(--border-soft); border-radius: 8px; font-size: 13.5px;
+    background: var(--card-2); color: var(--text);
   }
-  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .field { margin-top: 18px; }
-  .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .check { display: flex; align-items: center; gap: 8px; margin-top: 20px; font-weight: 500; font-size: 13px; cursor: pointer; }
-  .check input { width: auto; margin: 0; }
+  input:focus { outline: 2px solid var(--emerald); outline-offset: 1px; }
+  .field { margin-top: 22px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 6px; line-height: 1.5; }
+
+  .check { display: flex; align-items: center; gap: 9px; margin-top: 22px; font-weight: 500; font-size: 13.5px; cursor: pointer; }
+  .check input { width: auto; margin: 0; accent-color: var(--emerald); }
+
   button[type=submit] {
-    margin-top: 28px; width: 100%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-    color: white; border: 0; padding: 12px 16px; border-radius: 9px;
-    font-size: 14px; font-weight: 600; cursor: pointer;
-    box-shadow: 0 2px 6px rgba(37,99,235,.35);
+    margin-top: 30px; width: 100%;
+    background: linear-gradient(135deg, var(--emerald-2), var(--emerald) 60%, var(--emerald-soft));
+    color: var(--ink); border: 0; padding: 14px 16px; border-radius: 10px;
+    font-size: 14.5px; font-weight: 700; letter-spacing: .01em; cursor: pointer;
+    box-shadow: 0 10px 24px -8px rgba(31,111,77,.5);
+    transition: transform .15s ease, box-shadow .15s ease;
   }
-  button[type=submit]:hover { filter: brightness(1.05); }
+  button[type=submit]:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -8px rgba(169,129,47,.65); }
+  button[type=submit]:active { transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -97,20 +193,39 @@
       <div class="logo-badge">X</div>
       <h1>xl-diff</h1>
     </div>
-    <p class="sub">Compare two or more spreadsheets with a GitHub-style diff.</p>
+    <p class="sub">Compare two or more spreadsheets with a refined, line-by-line diff.</p>
 
     <form action="/diff" method="post" enctype="multipart/form-data">
+      <div class="section-label">Files</div>
       <div class="drop" id="fileList">
         <div class="file-row">
-          <span class="badge">BASE</span>
-          <input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" required>
+          <span class="badge">Base</span>
+          <button type="button" class="pick-btn" onclick="this.nextElementSibling.click()">Choose file</button>
+          <input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" onchange="updateFileName(this)">
+          <span class="file-name">No file selected</span>
+          {% if remote_enabled %}<span class="row-or">or</span>
+          <input type="text" class="remote-url" name="remote_refs" placeholder="s3://bucket/file.xlsx">{% endif %}
         </div>
         <div class="file-row">
           <span class="badge">v2</span>
-          <input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" required>
+          <button type="button" class="pick-btn" onclick="this.nextElementSibling.click()">Choose file</button>
+          <input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" onchange="updateFileName(this)">
+          <span class="file-name">No file selected</span>
+          {% if remote_enabled %}<span class="row-or">or</span>
+          <input type="text" class="remote-url" name="remote_refs" placeholder="s3://bucket/file.xlsx">{% endif %}
         </div>
       </div>
       <button type="button" class="add-file" onclick="addFile()">+ Add another file</button>
+
+      {% if remote_enabled %}
+      <div class="hint">
+        Each row accepts either an uploaded file or a remote URI ({{ allowed_schemes | join(', ') }}).
+        Uploads are capped at {{ max_upload_mb }} MB, remote objects at {{ max_remote_mb }} MB,
+        up to {{ max_files }} files total.
+      </div>
+      {% else %}
+      <div class="hint">Uploads are capped at {{ max_upload_mb }} MB, up to {{ max_files }} files total.</div>
+      {% endif %}
 
       <label class="check">
         <input type="checkbox" name="header" value="1">
@@ -129,16 +244,65 @@
   </div>
 
 <script>
+  const REMOTE_ENABLED = {{ remote_enabled | tojson }};
+
+  function updateFileName(input) {
+    const nameEl = input.nextElementSibling;
+    if (input.files && input.files.length > 0) {
+      nameEl.textContent = input.files[0].name;
+      nameEl.classList.add('has-file');
+    } else {
+      nameEl.textContent = 'No file selected';
+      nameEl.classList.remove('has-file');
+    }
+  }
+
+  function wireDragAndDrop(row) {
+    const fileInput = row.querySelector('input[type=file]');
+    ['dragenter', 'dragover'].forEach(evt =>
+      row.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); row.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(evt =>
+      row.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); row.classList.remove('dragover'); }));
+    row.addEventListener('drop', e => {
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        fileInput.files = dt.files;
+        updateFileName(fileInput);
+      }
+    });
+  }
+  document.querySelectorAll('#fileList .file-row').forEach(wireDragAndDrop);
+
   function addFile() {
     const list = document.getElementById('fileList');
     const row = document.createElement('div');
     row.className = 'file-row';
     const n = list.children.length + 1;
     row.innerHTML = '<span class="badge">v' + n + '</span>' +
-      '<input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" required>' +
+      '<button type="button" class="pick-btn" onclick="this.nextElementSibling.click()">Choose file</button>' +
+      '<input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" onchange="updateFileName(this)">' +
+      '<span class="file-name">No file selected</span>' +
+      (REMOTE_ENABLED ? '<span class="row-or">or</span><input type="text" class="remote-url" name="remote_refs" placeholder="s3://bucket/file.xlsx">' : '') +
       '<button type="button" class="remove-file" onclick="this.parentElement.remove()">&times;</button>';
     list.appendChild(row);
+    wireDragAndDrop(row);
   }
+
+  document.querySelector('form').addEventListener('submit', function (e) {
+    const rows = document.querySelectorAll('#fileList .file-row');
+    for (const row of rows) {
+      const file = row.querySelector('input[type=file]');
+      const url = row.querySelector('input.remote-url');
+      const hasFile = file && file.files && file.files.length > 0;
+      const hasUrl = url && url.value.trim() !== '';
+      if (!hasFile && !hasUrl) {
+        e.preventDefault();
+        alert('Each row needs either an uploaded file or a remote URI.');
+        return;
+      }
+    }
+  });
+
   function applyTheme(t) {
     if (t) document.documentElement.setAttribute('data-theme', t);
     else document.documentElement.removeAttribute('data-theme');

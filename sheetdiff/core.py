@@ -1,4 +1,6 @@
 from typing import List, Tuple, Optional, Any, Dict
+import os
+import tempfile
 import pandas as pd
 import json
 
@@ -136,21 +138,21 @@ def diff_workbook(left: str, right: str, key: Optional[str] = None) -> Dict[str,
 
     all_sheets = list(dict.fromkeys(list(left_sheets) + list(right_sheets)))
     result: Dict[str, List[Change]] = {}
-    for s in all_sheets:
-        # If a sheet is missing in one workbook, represent as added/removed row marker
-        Lpath = left
-        Rpath = right
-        if s not in left_sheets:
-            # left missing: represent as empty file vs sheet in right
-            # create an empty CSV temp via pandas for comparison fallback
-            empty = pd.DataFrame()
-            empty.to_csv(f".tmp_empty_{s}.csv", index=False)
-            Lpath = f".tmp_empty_{s}.csv"
-        if s not in right_sheets:
-            empty = pd.DataFrame()
-            empty.to_csv(f".tmp_empty_{s}.csv", index=False)
-            Rpath = f".tmp_empty_{s}.csv"
-        result[s] = diff_sheets(Lpath, Rpath, key=key, sheet_name=s)
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        empty_path = None
+
+        def _empty_csv() -> str:
+            nonlocal empty_path
+            if empty_path is None:
+                empty_path = os.path.join(tmp, "empty.csv")
+                pd.DataFrame().to_csv(empty_path, index=False)
+            return empty_path
+
+        for s in all_sheets:
+            # If a sheet is missing in one workbook, represent as added/removed row marker
+            Lpath = left if s in left_sheets else _empty_csv()
+            Rpath = right if s in right_sheets else _empty_csv()
+            result[s] = diff_sheets(Lpath, Rpath, key=key, sheet_name=s)
     return result
 
 
@@ -324,7 +326,14 @@ def _build_multi_row(idx, values: List[Optional[Dict[str, str]]], columns: List[
                 if v.get(c, "") != baseline.get(c, ""):
                     changed.add(c)
     missing = [v is None for v in values]
-    status = "diff" if changed or any(missing) else "same"
+    if missing[0] and not all(missing):
+        status = "added"
+    elif not missing[0] and len(missing) > 1 and all(missing[1:]):
+        status = "removed"
+    elif changed or any(missing):
+        status = "diff"
+    else:
+        status = "same"
     return {"line": idx, "status": status, "cells": values, "changed": sorted(changed), "missing": missing, "baseline": baseline}
 
 def format_unified(changes: List[Change]) -> str:
