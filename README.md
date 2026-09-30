@@ -1,7 +1,7 @@
 # sheet-diff
 
 [![CI](https://github.com/muhammadumer0266/sheet-diff/actions/workflows/CI.yml/badge.svg)](https://github.com/muhammadumer0266/sheet-diff/actions/workflows/CI.yml)
-[![PyPI](https://img.shields.io/pypi/v/sheetdiff.svg)](https://pypi.org/project/sheetdiff/)
+[![PyPI](https://img.shields.io/pypi/v/sheet-diff.svg)](https://pypi.org/project/sheet-diff/)
 [![Language](https://img.shields.io/badge/Language-Rust%20%2F%20Python-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -19,16 +19,18 @@ The diff engine is pure Python (pandas-based) by default, with an optional Rust-
 ## Installation
 
 ```bash
-pip install sheetdiff[all]     # recommended: CLI + Python API + web UI + remote storage
+pip install sheet-diff[all]     # recommended: CLI + Python API + web UI + remote storage
 ```
 
 Only need part of it? Install a specific extra instead:
 
 ```bash
-pip install sheetdiff[cli]     # CLI + Python API only, no web UI or remote storage deps
-pip install sheetdiff[web]     # CLI + Python API + local web UI
-pip install sheetdiff[remote]  # CLI + Python API + S3 / MinIO / R2 / Garage / Azure Blob support
+pip install sheet-diff[cli]     # CLI + Python API only, no web UI or remote storage deps
+pip install sheet-diff[web]     # CLI + Python API + local web UI
+pip install sheet-diff[remote]  # CLI + Python API + S3 / MinIO / R2 / Garage / Azure Blob support
 ```
+
+The distribution is named `sheet-diff`; the Python package you `import` is `sheetdiff`.
 
 ## Usage
 
@@ -55,7 +57,7 @@ For web backends (Django/Celery, etc.), call `diff_sheets` or `compare_workbooks
 ### Web UI
 
 ```bash
-pip install sheetdiff[web]
+pip install sheet-diff[web]
 xldiff-web
 ```
 
@@ -64,8 +66,8 @@ Open `http://localhost:5000`, upload two (or more) spreadsheets (optionally with
 ### Remote storage
 
 ```bash
-pip install sheetdiff[remote]
-sheetdiff s3://my-bucket/left.xlsx s3://my-bucket/right.xlsx --key id
+pip install sheet-diff[remote]
+python -m sheetdiff.cli s3://my-bucket/left.xlsx s3://my-bucket/right.xlsx --key id
 ```
 
 Files can also be referenced by URI in the web UI (each row accepts an upload *or* a URI) and from the Python API via `sheetdiff.resolve_source`. Credentials and per-backend endpoints are configured once via environment variables, never through the web form — see [docs/REMOTE_STORAGE.md](docs/REMOTE_STORAGE.md) for the full list, plus how to configure upload/remote size limits (`SHEETDIFF_MAX_UPLOAD_MB`, `SHEETDIFF_MAX_REMOTE_MB`, `SHEETDIFF_MAX_FILES`).
