@@ -4,7 +4,7 @@ Files can either be uploaded directly or referenced by a remote URI
 (s3://, minio://, r2://, garage://, az:///azure://) — see storage.py and
 config.py for how remote credentials and size limits are configured.
 
-Run: python -m sheetdiff.webapp
+Run: python -m sheet_diff.webapp
 """
 import os
 import tempfile
@@ -91,7 +91,7 @@ def diff():
     if len(slots) > config.MAX_FILES:
         return (
             f"Too many files: {len(slots)} given, {config.MAX_FILES} allowed "
-            "(configure via SHEETDIFF_MAX_FILES).",
+            "(configure via SHEET_DIFF_MAX_FILES).",
             400,
         )
     key = request.form.get("key") or None
@@ -162,7 +162,7 @@ def diff():
 def too_large(_e):
     return (
         f"Upload too large. The server accepts at most {config.MAX_UPLOAD_MB} MB "
-        "per request (configure via SHEETDIFF_MAX_UPLOAD_MB), or use a remote:// "
+        "per request (configure via SHEET_DIFF_MAX_UPLOAD_MB), or use a remote:// "
         "URI so the file doesn't have to pass through the browser.",
         413,
     )

@@ -311,12 +311,12 @@
     const current = document.documentElement.getAttribute('data-theme') ||
       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     const next = current === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('xldiff-theme', next); } catch (e) {}
+    try { localStorage.setItem('sheet-diff-theme', next); } catch (e) {}
     applyTheme(next);
   }
   (function () {
     try {
-      const saved = localStorage.getItem('xldiff-theme');
+      const saved = localStorage.getItem('sheet-diff-theme');
       if (saved) applyTheme(saved);
     } catch (e) {}
   })();

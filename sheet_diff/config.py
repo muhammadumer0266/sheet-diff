@@ -1,4 +1,4 @@
-"""Central, environment-driven configuration for sheetdiff.
+"""Central, environment-driven configuration for sheet_diff.
 
 Every knob here can be overridden with an environment variable so a
 deployment can tune limits and remote-storage credentials without touching
@@ -33,28 +33,28 @@ def _env_list(name: str, default: str) -> list:
 # --- Upload / download size limits -----------------------------------------
 # All expressed in MB for readability at the env-var layer; converted to
 # bytes for use. Change per-deployment via env vars, e.g.:
-#   SHEETDIFF_MAX_UPLOAD_MB=250
-#   SHEETDIFF_MAX_REMOTE_MB=500
-#   SHEETDIFF_MAX_FILES=6
-MAX_UPLOAD_MB = _env_int("SHEETDIFF_MAX_UPLOAD_MB", 100)
-MAX_REMOTE_MB = _env_int("SHEETDIFF_MAX_REMOTE_MB", MAX_UPLOAD_MB)
+#   SHEET_DIFF_MAX_UPLOAD_MB=250
+#   SHEET_DIFF_MAX_REMOTE_MB=500
+#   SHEET_DIFF_MAX_FILES=6
+MAX_UPLOAD_MB = _env_int("SHEET_DIFF_MAX_UPLOAD_MB", 100)
+MAX_REMOTE_MB = _env_int("SHEET_DIFF_MAX_REMOTE_MB", MAX_UPLOAD_MB)
 MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024
 MAX_REMOTE_BYTES = MAX_REMOTE_MB * 1024 * 1024
 
 # Hard ceiling on how many files can be compared in one request (web UI and
 # CLI --all-sheets multi-file mode), to bound memory/CPU on shared servers.
-MAX_FILES = _env_int("SHEETDIFF_MAX_FILES", 8)
+MAX_FILES = _env_int("SHEET_DIFF_MAX_FILES", 8)
 
 # Network timeouts for remote storage reads (seconds).
-REMOTE_CONNECT_TIMEOUT = _env_int("SHEETDIFF_REMOTE_CONNECT_TIMEOUT", 10)
-REMOTE_READ_TIMEOUT = _env_int("SHEETDIFF_REMOTE_READ_TIMEOUT", 60)
+REMOTE_CONNECT_TIMEOUT = _env_int("SHEET_DIFF_REMOTE_CONNECT_TIMEOUT", 10)
+REMOTE_READ_TIMEOUT = _env_int("SHEET_DIFF_REMOTE_READ_TIMEOUT", 60)
 
 # Which remote URI schemes are enabled at all. Empty by default in the sense
 # that only schemes listed here are ever dispatched to fsspec; anything else
 # (including http/https, to avoid turning the diff endpoint into an SSRF
 # proxy) is rejected outright.
 ALLOWED_REMOTE_SCHEMES = set(
-    _env_list("SHEETDIFF_ALLOWED_SCHEMES", "s3,minio,r2,garage,az,azure,gs")
+    _env_list("SHEET_DIFF_ALLOWED_SCHEMES", "s3,minio,r2,garage,az,azure,gs")
 )
 
 
@@ -65,7 +65,7 @@ class BackendConfig:
 
 
 def _s3_backend(scheme: str) -> BackendConfig:
-    prefix = f"SHEETDIFF_STORAGE_{scheme.upper()}_"
+    prefix = f"SHEET_DIFF_STORAGE_{scheme.upper()}_"
     opts: Dict[str, str] = {}
     endpoint = os.environ.get(prefix + "ENDPOINT_URL")
     if endpoint:
@@ -83,7 +83,7 @@ def _s3_backend(scheme: str) -> BackendConfig:
 
 
 def _azure_backend() -> BackendConfig:
-    prefix = "SHEETDIFF_STORAGE_AZ_"
+    prefix = "SHEET_DIFF_STORAGE_AZ_"
     opts: Dict[str, str] = {}
     conn_str = os.environ.get(prefix + "CONNECTION_STRING")
     if conn_str:
@@ -103,7 +103,7 @@ def _azure_backend() -> BackendConfig:
 
 def _gcs_backend() -> BackendConfig:
     opts: Dict[str, str] = {}
-    creds = os.environ.get("SHEETDIFF_STORAGE_GS_TOKEN")
+    creds = os.environ.get("SHEET_DIFF_STORAGE_GS_TOKEN")
     if creds:
         opts["token"] = creds
     return BackendConfig(protocol="gcs", storage_options=opts)

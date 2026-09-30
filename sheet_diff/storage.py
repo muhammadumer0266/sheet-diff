@@ -1,9 +1,9 @@
 """Resolve a spreadsheet reference — local path or remote URI — to a local
-file that the rest of sheetdiff (pandas / the Rust core) can read.
+file that the rest of sheet_diff (pandas / the Rust core) can read.
 
 Supported remote schemes: s3://, minio://, r2://, garage:// (all S3-compatible,
 routed through `s3fs` with a per-scheme endpoint/credentials from
-`sheetdiff.config`), and az:// / azure:// (Azure Blob Storage via `adlfs`).
+`sheet_diff.config`), and az:// / azure:// (Azure Blob Storage via `adlfs`).
 
 Design notes / edge cases handled here (see docs/EDGE_CASES.md for the full
 list this project tracks):
@@ -119,7 +119,7 @@ def fetch_to_local(ref: str, dest_dir: str, max_bytes: Optional[int] = None) -> 
         raise RemoteFileTooLargeError(
             f"'{ref}' is {size / (1024 * 1024):.1f} MB, which exceeds the "
             f"{limit / (1024 * 1024):.0f} MB remote file size limit "
-            f"(configure via SHEETDIFF_MAX_REMOTE_MB)."
+            f"(configure via SHEET_DIFF_MAX_REMOTE_MB)."
         )
 
     basename = os.path.basename(remote_path) or f"remote-{uuid.uuid4().hex}"

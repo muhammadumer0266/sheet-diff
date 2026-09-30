@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from sheetdiff import config, storage
+from sheet_diff import config, storage
 
 
 def test_local_path_passthrough(tmp_path):
@@ -140,13 +140,13 @@ def test_fetch_to_local_downloads_within_limit(tmp_path, monkeypatch):
 
 
 def test_env_int_validation(monkeypatch):
-    monkeypatch.setenv("SHEETDIFF_MAX_UPLOAD_MB", "not-a-number")
+    monkeypatch.setenv("SHEET_DIFF_MAX_UPLOAD_MB", "not-a-number")
     with pytest.raises(ValueError):
-        config._env_int("SHEETDIFF_MAX_UPLOAD_MB", 100)
+        config._env_int("SHEET_DIFF_MAX_UPLOAD_MB", 100)
 
-    monkeypatch.setenv("SHEETDIFF_MAX_UPLOAD_MB", "-5")
+    monkeypatch.setenv("SHEET_DIFF_MAX_UPLOAD_MB", "-5")
     with pytest.raises(ValueError):
-        config._env_int("SHEETDIFF_MAX_UPLOAD_MB", 100)
+        config._env_int("SHEET_DIFF_MAX_UPLOAD_MB", 100)
 
-    monkeypatch.setenv("SHEETDIFF_MAX_UPLOAD_MB", "250")
-    assert config._env_int("SHEETDIFF_MAX_UPLOAD_MB", 100) == 250
+    monkeypatch.setenv("SHEET_DIFF_MAX_UPLOAD_MB", "250")
+    assert config._env_int("SHEET_DIFF_MAX_UPLOAD_MB", 100) == 250

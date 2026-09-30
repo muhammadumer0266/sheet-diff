@@ -1,5 +1,5 @@
 import json
-from sheetdiff.core import diff_sheets, format_unified
+from sheet_diff.core import diff_sheets, format_unified
 import pandas as pd
 
 def test_positional_diff(tmp_path):

@@ -1,6 +1,6 @@
 # Remote storage & size limits
 
-xl-diff can compare spreadsheets that live in object storage instead of (or
+sheet-diff can compare spreadsheets that live in object storage instead of (or
 alongside) files uploaded through the browser or passed as local paths on
 the CLI. This covers S3-compatible services — AWS S3, MinIO, Cloudflare R2,
 Garage — and Azure Blob Storage.
@@ -8,9 +8,9 @@ Garage — and Azure Blob Storage.
 ## Install
 
 ```
-pip install xl-diff[remote]      # fsspec + s3fs + adlfs
-pip install xl-diff[web,remote]  # web UI + remote storage
-pip install xl-diff[all]         # everything
+pip install sheet-diff[remote]      # fsspec + s3fs + adlfs
+pip install sheet-diff[web,remote]  # web UI + remote storage
+pip install sheet-diff[all]         # everything
 ```
 
 Without this extra installed, any `s3://`/`az://`/... reference fails fast
@@ -22,11 +22,11 @@ local path.
 
 - CLI: pass a URI in place of a local path.
   ```
-  sheetdiff s3://my-bucket/reports/2026-01.xlsx s3://my-bucket/reports/2026-02.xlsx --key id
+  python -m sheet_diff.cli s3://my-bucket/reports/2026-01.xlsx s3://my-bucket/reports/2026-02.xlsx --key id
   ```
 - Web UI: each file row accepts either an upload *or* a URI in the adjacent
   text field — leave the file input empty and fill in the URI instead.
-- Python API: `sheetdiff.resolve_source(uri, dest_dir)` downloads a remote
+- Python API: `sheet_diff.resolve_source(uri, dest_dir)` downloads a remote
   object to a local temp file and returns its path; `diff_sheets` etc. still
   only ever see local paths.
 
@@ -37,7 +37,7 @@ fetch arbitrary internal or external URLs (see EDGE_CASES.md #83, #46).
 
 ## Credentials — never through the web form
 
-Credentials are configured once by whoever deploys xl-diff, via environment
+Credentials are configured once by whoever deploys sheet-diff, via environment
 variables. They are **not** accepted as form fields or query parameters —
 a user of the web UI can only reference objects inside buckets/containers
 the deployment already has credentials for, never supply their own.
@@ -52,22 +52,22 @@ real S3 and an internal MinIO) at once, each reached by its own scheme:
 
 ```
 # MinIO
-SHEETDIFF_STORAGE_MINIO_ENDPOINT_URL=http://minio.internal:9000
-SHEETDIFF_STORAGE_MINIO_KEY=...
-SHEETDIFF_STORAGE_MINIO_SECRET=...
+SHEET_DIFF_STORAGE_MINIO_ENDPOINT_URL=http://minio.internal:9000
+SHEET_DIFF_STORAGE_MINIO_KEY=...
+SHEET_DIFF_STORAGE_MINIO_SECRET=...
 
 # Cloudflare R2
-SHEETDIFF_STORAGE_R2_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com
-SHEETDIFF_STORAGE_R2_KEY=...
-SHEETDIFF_STORAGE_R2_SECRET=...
+SHEET_DIFF_STORAGE_R2_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com
+SHEET_DIFF_STORAGE_R2_KEY=...
+SHEET_DIFF_STORAGE_R2_SECRET=...
 
 # Garage
-SHEETDIFF_STORAGE_GARAGE_ENDPOINT_URL=https://garage.internal:3900
-SHEETDIFF_STORAGE_GARAGE_KEY=...
-SHEETDIFF_STORAGE_GARAGE_SECRET=...
+SHEET_DIFF_STORAGE_GARAGE_ENDPOINT_URL=https://garage.internal:3900
+SHEET_DIFF_STORAGE_GARAGE_KEY=...
+SHEET_DIFF_STORAGE_GARAGE_SECRET=...
 
 # Self-hosted / other S3-compatible reached via the plain s3:// scheme
-SHEETDIFF_STORAGE_S3_ENDPOINT_URL=https://s3.example.internal
+SHEET_DIFF_STORAGE_S3_ENDPOINT_URL=https://s3.example.internal
 ```
 
 Use whichever scheme matches the backend when referencing a file, e.g.
@@ -77,13 +77,13 @@ Use whichever scheme matches the backend when referencing a file, e.g.
 
 ```
 # Either a connection string...
-SHEETDIFF_STORAGE_AZ_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
+SHEET_DIFF_STORAGE_AZ_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=...
 
 # ...or account name + key/SAS token
-SHEETDIFF_STORAGE_AZ_ACCOUNT_NAME=myaccount
-SHEETDIFF_STORAGE_AZ_ACCOUNT_KEY=...
+SHEET_DIFF_STORAGE_AZ_ACCOUNT_NAME=myaccount
+SHEET_DIFF_STORAGE_AZ_ACCOUNT_KEY=...
 # or
-SHEETDIFF_STORAGE_AZ_SAS_TOKEN=...
+SHEET_DIFF_STORAGE_AZ_SAS_TOKEN=...
 ```
 
 Reference with `az://container/blob.xlsx` (or `azure://...`, an alias).
@@ -91,7 +91,7 @@ Reference with `az://container/blob.xlsx` (or `azure://...`, an alias).
 ### Restricting which schemes are enabled
 
 ```
-SHEETDIFF_ALLOWED_SCHEMES=s3,minio    # only these are ever dispatched remotely
+SHEET_DIFF_ALLOWED_SCHEMES=s3,minio    # only these are ever dispatched remotely
 ```
 
 Defaults to `s3,minio,r2,garage,az,azure,gs`. Set to an empty string to
@@ -105,11 +105,11 @@ another's:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `SHEETDIFF_MAX_UPLOAD_MB` | 100 | Max size of an uploaded file / total web request body |
-| `SHEETDIFF_MAX_REMOTE_MB` | same as upload | Max size of a single remote object, checked both via a `HEAD`-style stat *and* while streaming (in case the reported size lied) |
-| `SHEETDIFF_MAX_FILES` | 8 | Max number of files compared in one request (web multi-file view or `--all-sheets`) |
-| `SHEETDIFF_REMOTE_CONNECT_TIMEOUT` | 10 | Seconds before a remote connection attempt is abandoned |
-| `SHEETDIFF_REMOTE_READ_TIMEOUT` | 60 | Seconds before a stalled remote read is abandoned |
+| `SHEET_DIFF_MAX_UPLOAD_MB` | 100 | Max size of an uploaded file / total web request body |
+| `SHEET_DIFF_MAX_REMOTE_MB` | same as upload | Max size of a single remote object, checked both via a `HEAD`-style stat *and* while streaming (in case the reported size lied) |
+| `SHEET_DIFF_MAX_FILES` | 8 | Max number of files compared in one request (web multi-file view or `--all-sheets`) |
+| `SHEET_DIFF_REMOTE_CONNECT_TIMEOUT` | 10 | Seconds before a remote connection attempt is abandoned |
+| `SHEET_DIFF_REMOTE_READ_TIMEOUT` | 60 | Seconds before a stalled remote read is abandoned |
 
 CLI callers can also override the remote cap per-invocation with
 `--max-remote-mb`, without touching the deployment's env vars.
@@ -117,12 +117,12 @@ CLI callers can also override the remote cap per-invocation with
 Raise these for large internal deployments, e.g.:
 
 ```
-SHEETDIFF_MAX_UPLOAD_MB=500
-SHEETDIFF_MAX_REMOTE_MB=2000
-SHEETDIFF_MAX_FILES=4
+SHEET_DIFF_MAX_UPLOAD_MB=500
+SHEET_DIFF_MAX_REMOTE_MB=2000
+SHEET_DIFF_MAX_FILES=4
 ```
 
-Lower `SHEETDIFF_MAX_FILES` if wide N-way comparisons are causing memory
+Lower `SHEET_DIFF_MAX_FILES` if wide N-way comparisons are causing memory
 pressure — each file is loaded fully into a pandas DataFrame in the current
 implementation (see "Known limitations" below).
 
@@ -134,7 +134,7 @@ implementation (see "Known limitations" below).
 | Disallowed/unknown scheme (incl. `http://`) | 400 | exits 1 |
 | Remote object exceeds size cap (reported or while streaming) | 413 | exits 1 |
 | Remote object not found / network error | 400 | exits 1 |
-| Uploaded request exceeds `SHEETDIFF_MAX_UPLOAD_MB` | 413 | n/a |
+| Uploaded request exceeds `SHEET_DIFF_MAX_UPLOAD_MB` | 413 | n/a |
 | Too many files/URIs in one request | 400 | n/a (CLI is always 2 files) |
 
 Partially-downloaded remote files are always cleaned up, including when a

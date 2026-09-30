@@ -30,20 +30,20 @@ pip install sheet-diff[web]     # CLI + Python API + local web UI
 pip install sheet-diff[remote]  # CLI + Python API + S3 / MinIO / R2 / Garage / Azure Blob support
 ```
 
-The distribution is named `sheet-diff`; the Python package you `import` is `sheetdiff`.
+The distribution is named `sheet-diff`; the Python package you `import` is `sheet_diff` (hyphens aren't valid in Python identifiers, so the underscore form is used, same convention as e.g. `scikit-learn` → `sklearn`).
 
 ## Usage
 
 ### Command line
 
 ```bash
-python -m sheetdiff.cli left.xlsx right.xlsx --key id
+python -m sheet_diff.cli left.xlsx right.xlsx --key id
 ```
 
 ### Python API
 
 ```python
-from sheetdiff.core import diff_sheets, format_unified
+from sheet_diff.core import diff_sheets, format_unified
 
 changes = diff_sheets("left.csv", "right.csv", key="id")
 print(format_unified(changes))
@@ -58,7 +58,7 @@ For web backends (Django/Celery, etc.), call `diff_sheets` or `compare_workbooks
 
 ```bash
 pip install sheet-diff[web]
-xldiff-web
+sheet-diff-web
 ```
 
 Open `http://localhost:5000`, upload two (or more) spreadsheets (optionally with a key column), and view a GitHub-style diff: green = added, red = removed, yellow = modified (old value struck through above the new one). Switch between a unified view and a VS Code-style split view with synced scrolling.
@@ -67,10 +67,10 @@ Open `http://localhost:5000`, upload two (or more) spreadsheets (optionally with
 
 ```bash
 pip install sheet-diff[remote]
-python -m sheetdiff.cli s3://my-bucket/left.xlsx s3://my-bucket/right.xlsx --key id
+python -m sheet_diff.cli s3://my-bucket/left.xlsx s3://my-bucket/right.xlsx --key id
 ```
 
-Files can also be referenced by URI in the web UI (each row accepts an upload *or* a URI) and from the Python API via `sheetdiff.resolve_source`. Credentials and per-backend endpoints are configured once via environment variables, never through the web form — see [docs/REMOTE_STORAGE.md](docs/REMOTE_STORAGE.md) for the full list, plus how to configure upload/remote size limits (`SHEETDIFF_MAX_UPLOAD_MB`, `SHEETDIFF_MAX_REMOTE_MB`, `SHEETDIFF_MAX_FILES`).
+Files can also be referenced by URI in the web UI (each row accepts an upload *or* a URI) and from the Python API via `sheet_diff.resolve_source`. Credentials and per-backend endpoints are configured once via environment variables, never through the web form — see [docs/REMOTE_STORAGE.md](docs/REMOTE_STORAGE.md) for the full list, plus how to configure upload/remote size limits (`SHEET_DIFF_MAX_UPLOAD_MB`, `SHEET_DIFF_MAX_REMOTE_MB`, `SHEET_DIFF_MAX_FILES`).
 
 ## Running from source (git clone)
 
@@ -85,7 +85,7 @@ source .venv/bin/activate        # macOS/Linux
 .venv\Scripts\Activate.ps1       # Windows PowerShell
 
 pip install -e ".[web]"
-xldiff-web
+sheet-diff-web
 ```
 
 That installs the pure-Python engine and starts the web UI at `http://localhost:5000`. To also build the faster Rust-backed engine in-place (optional):
@@ -104,7 +104,7 @@ pytest
 
 ### Using the Rust core directly
 
-The Rust extension can also be used on its own, independent of the `sheetdiff` Python package:
+The Rust extension can also be used on its own, independent of the `sheet_diff` Python package. It's a separate compiled module (`xl_diff`, published to crates.io under its original name) — `sheet_diff` uses it automatically when installed but doesn't require it:
 
 ```python
 import xl_diff

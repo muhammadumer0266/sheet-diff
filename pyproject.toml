@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sheet-diff"
-version = "0.2.0"
+version = "0.3.0"
 description = "Concise spreadsheet diff utility (CSV/XLSX) with an optional GitHub/VS Code-style web UI"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,10 +32,10 @@ Repository = "https://github.com/muhammadumer0266/sheet-diff"
 Issues = "https://github.com/muhammadumer0266/sheet-diff/issues"
 
 [project.scripts]
-xldiff-web = "sheetdiff.webapp:main"
+sheet-diff-web = "sheet_diff.webapp:main"
 
 [tool.setuptools.packages.find]
-include = ["sheetdiff", "sheetdiff.*"]
+include = ["sheet_diff", "sheet_diff.*"]
 
 [tool.setuptools.package-data]
-sheetdiff = ["templates/*.html"]
+sheet_diff = ["templates/*.html"]
