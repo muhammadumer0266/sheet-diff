@@ -3,90 +3,87 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>xl-diff — {{ left_name }} vs {{ right_name }}</title>
+<title>xl-diff — {{ file_names | join(' vs ') }}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #1e1e1e;
-    --panel: #1e1e1e;
-    --header: #252526;
-    --border: #3a3a3c;
-    --text: #d4d4d4;
-    --muted: #8a8a8a;
-    --gutter: #6e7681;
-    --add-bg: rgba(46,160,67,.15);
-    --add-bg-strong: rgba(46,160,67,.4);
-    --add-fg: #3fb950;
-    --del-bg: rgba(248,81,73,.15);
-    --del-bg-strong: rgba(248,81,73,.4);
-    --del-fg: #f85149;
-    --hunk-bg: rgba(56,139,253,.15);
-    --hunk-fg: #58a6ff;
-    --accent: #58a6ff;
+    --bg: #f6f8fa; --panel: #ffffff; --header: #ffffff; --border: #d0d7de;
+    --text: #1f2328; --muted: #656d76; --gutter: #8c959f;
+    --add-bg: #dafbe1; --add-bg-strong: #aceebb; --add-fg: #1a7f37;
+    --del-bg: #ffebe9; --del-bg-strong: #ffc1bc; --del-fg: #cf222e;
+    --hunk-bg: #ddf4ff; --hunk-fg: #0969da; --mod-fg: #9a6700;
+    --accent: #0969da; --base-bg: rgba(9,105,218,.08);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --panel: #0d1117; --header: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --gutter: #6e7681;
+    --add-bg: rgba(46,160,67,.15); --add-bg-strong: rgba(46,160,67,.4); --add-fg: #3fb950;
+    --del-bg: rgba(248,81,73,.15); --del-bg-strong: rgba(248,81,73,.4); --del-fg: #f85149;
+    --hunk-bg: rgba(56,139,253,.15); --hunk-fg: #58a6ff; --mod-fg: #d29922;
+    --accent: #58a6ff; --base-bg: rgba(88,166,255,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --panel: #0d1117; --header: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e; --gutter: #6e7681;
+      --add-bg: rgba(46,160,67,.15); --add-bg-strong: rgba(46,160,67,.4); --add-fg: #3fb950;
+      --del-bg: rgba(248,81,73,.15); --del-bg-strong: rgba(248,81,73,.4); --del-fg: #f85149;
+      --hunk-bg: rgba(56,139,253,.15); --hunk-fg: #58a6ff; --mod-fg: #d29922;
+      --accent: #58a6ff; --base-bg: rgba(88,166,255,.08);
+    }
   }
   * { box-sizing: border-box; }
-  html, body {
-    font-family: 'Inter', -apple-system, Segoe UI, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    margin: 0;
-    height: 100%;
-  }
+  html, body { font-family: 'Inter', -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100%; }
   body { display: flex; flex-direction: column; }
-  header.top {
-    position: sticky; top: 0; z-index: 20;
-    background: var(--header);
-    border-bottom: 1px solid var(--border);
-    padding: 10px 20px;
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  }
-  a.back {
-    color: var(--muted); text-decoration: none; font-size: 12.5px; font-weight: 500;
-  }
-  a.back:hover { color: var(--accent); }
-  .filepath {
-    font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .filepath .old { color: var(--del-fg); }
-  .filepath .new { color: var(--add-fg); }
-  .filepath .sep { color: var(--muted); }
-  .stat { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
-  .stat .add { color: var(--add-fg); }
-  .stat .del { color: var(--del-fg); }
-  .squares { display: flex; gap: 2px; }
-  .sq { width: 8px; height: 8px; border-radius: 2px; background: var(--border); }
-  .sq.add { background: var(--add-fg); }
-  .sq.del { background: var(--del-fg); }
 
-  .tabs { display: flex; gap: 2px; padding: 8px 20px 0; background: #181818; overflow-x: auto; }
+  header.top {
+    position: sticky; top: 0; z-index: 30; background: var(--header); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  a.back { color: var(--muted); text-decoration: none; font-size: 12.5px; font-weight: 500; }
+  a.back:hover { color: var(--accent); }
+  .filepath { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .filepath .chip { display: flex; align-items: center; gap: 5px; }
+  .filepath .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.c0 { background: var(--del-fg); } .dot.c1 { background: var(--add-fg); } .dot.c2 { background: #d29922; }
+  .dot.c3 { background: #8957e5; } .dot.c4 { background: #bf3989; }
+  .filepath .sep { color: var(--muted); }
+
+  .view-toggle { display: flex; gap: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
+  .view-toggle button {
+    border: none; background: transparent; color: var(--muted); padding: 6px 14px; border-radius: 6px;
+    font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .view-toggle button.active { background: var(--accent); color: #fff; }
+
+  .theme-toggle { border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; }
+  .stat { margin-left: auto; display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  .stat .add { color: var(--add-fg); } .stat .del { color: var(--del-fg); }
+
+  .tabs { display: flex; gap: 2px; padding: 8px 20px 0; background: var(--header); overflow-x: auto; border-bottom: 1px solid var(--border); }
   .tab {
     border: 1px solid transparent; background: transparent; color: var(--muted);
     padding: 7px 14px; border-radius: 6px 6px 0 0; font-size: 12.5px; font-weight: 500;
     cursor: pointer; white-space: nowrap; font-family: 'JetBrains Mono', monospace;
   }
-  .tab.active { background: var(--panel); color: var(--text); border-color: var(--border); border-bottom-color: var(--panel); }
+  .tab.active { background: var(--bg); color: var(--text); border-color: var(--border); border-bottom-color: var(--bg); }
   .tab:hover:not(.active) { color: var(--text); }
-  .tab .cnt { margin-left: 6px; }
-  .tab .cnt .add { color: var(--add-fg); }
-  .tab .cnt .del { color: var(--del-fg); }
+  .tab .cnt .add { color: var(--add-fg); } .tab .cnt .del { color: var(--del-fg); }
+  .tab .sheet-badge { font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-left: 6px; color: #fff; }
+  .sheet-badge.added { background: var(--add-fg); } .sheet-badge.removed { background: var(--del-fg); }
 
-  .sheet { display: none; flex: 1; min-height: 0; flex-direction: column; }
-  .sheet.active { display: flex; }
+  .pane { display: none; flex: 1; min-height: 0; flex-direction: column; }
+  .pane.active { display: flex; }
+  .view-root { display: none; flex: 1; min-height: 0; flex-direction: column; }
+  .view-root.active { display: flex; }
 
-  .panel { background: var(--panel); border-top: 1px solid var(--border); flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .panel { background: var(--panel); flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .scroll { overflow: auto; flex: 1; min-height: 0; }
   table { border-collapse: collapse; width: 100%; min-width: max-content; }
 
-  td, th {
-    font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 20px;
-    padding: 0 10px; white-space: pre; vertical-align: top;
-  }
-  td.gutter {
-    width: 44px; min-width: 44px; text-align: right; color: var(--gutter);
-    user-select: none; padding: 0 8px; border-right: 1px solid transparent;
-  }
+  td, th { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 20px; padding: 0 10px; white-space: pre; vertical-align: top; }
+  td.gutter { width: 44px; min-width: 44px; text-align: right; color: var(--gutter); user-select: none; padding: 0 8px; }
   td.marker { width: 20px; min-width: 20px; text-align: center; user-select: none; font-weight: 600; }
   td.content { width: 100%; }
 
@@ -102,16 +99,26 @@
 
   tr.hunk td { background: var(--hunk-bg); color: var(--hunk-fg); font-weight: 500; padding-top: 3px; padding-bottom: 3px; }
   tr.hunk td.gutter { color: var(--hunk-fg); }
-
-  tr.fold td { background: #17233a; color: var(--hunk-fg); cursor: pointer; padding-top: 4px; padding-bottom: 4px; }
-  tr.fold:hover td { background: #1c2b47; }
+  tr.fold td { background: var(--hunk-bg); color: var(--hunk-fg); cursor: pointer; padding-top: 4px; padding-bottom: 4px; opacity: .85; }
+  tr.fold:hover td { opacity: 1; }
   tr.fold .fold-icon { display: inline-block; margin-right: 6px; transition: transform .12s; }
   tr.fold.expanded .fold-icon { transform: rotate(90deg); }
-
   tr.hidden-row { display: none; }
 
   .empty, .error { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
   .error { color: var(--del-fg); }
+  .sheet-banner { padding: 8px 16px; font-size: 12px; color: var(--muted); background: var(--hunk-bg); border-bottom: 1px solid var(--border); }
+  .sheet-banner b { color: var(--text); }
+
+  /* split (multi-file) view */
+  .group-head { position: sticky; top: 0; background: var(--header); z-index: 5; }
+  .group-head th { text-align: left; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); border-bottom: 1px solid var(--border); padding: 8px 10px; }
+  .group-head th.base { color: var(--accent); }
+  th.file-sep, td.file-sep { width: 8px; background: var(--border); padding: 0; }
+  td.miss { color: var(--muted); font-style: italic; background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(128,128,128,.06) 6px, rgba(128,128,128,.06) 12px); }
+  td.cell-base { background: var(--base-bg); }
+  td.cell-diff { background: var(--del-bg-strong); }
+  tr.row-diff td.gutter { color: var(--mod-fg); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -119,114 +126,213 @@
 <header class="top">
   <a class="back" href="/">&larr; New comparison</a>
   <div class="filepath">
-    <span class="old">{{ left_name }}</span><span class="sep">&harr;</span><span class="new">{{ right_name }}</span>
+    {% for n in file_names %}
+      <span class="chip"><span class="dot c{{ loop.index0 % 5 }}"></span>{{ n }}</span>{% if not loop.last %}<span class="sep">&rarr;</span>{% endif %}
+    {% endfor %}
   </div>
-  {% set total_add = sheets.values() | sum(attribute='added') %}
-  {% set total_del = sheets.values() | sum(attribute='removed') %}
-  {% set total_mod = sheets.values() | sum(attribute='modified') %}
-  <div class="stat">
-    <span class="add">+{{ total_add + total_mod }}</span>
-    <span class="del">-{{ total_del + total_mod }}</span>
+  <div class="view-toggle">
+    <button id="btn-unified" class="active" onclick="showView('unified')">Unified</button>
+    <button id="btn-split" onclick="showView('split')">Split</button>
   </div>
+  <button class="theme-toggle" onclick="toggleTheme()">&#9728;&#65039; / &#127769;</button>
 </header>
 
-<nav class="tabs">
-  {% for sheet_name, d in sheets.items() %}
-    <button class="tab {{ 'active' if loop.first else '' }}" onclick="showSheet('{{ loop.index0 }}')">
-      {{ sheet_name }}
-      {% if d.added or d.removed or d.modified %}
-        <span class="cnt">
-          {% if d.added or d.modified %}<span class="add">+{{ d.added + d.modified }}</span>{% endif %}
-          {% if d.removed or d.modified %}<span class="del">-{{ d.removed + d.modified }}</span>{% endif %}
-        </span>
-      {% endif %}
-    </button>
-  {% endfor %}
-</nav>
+<!-- ============ UNIFIED VIEW ============ -->
+<div class="view-root active" id="view-unified">
+  {% if multi_file %}
+  <nav class="tabs" id="pair-tabs">
+    {% for pair in pairs %}
+      <button class="tab {{ 'active' if loop.first else '' }}" onclick="showPair('{{ loop.index0 }}')">{{ pair.left_name }} &rarr; {{ pair.right_name }}</button>
+    {% endfor %}
+  </nav>
+  {% endif %}
 
-{% for sheet_name, d in sheets.items() %}
-<section class="sheet {{ 'active' if loop.first else '' }}" id="sheet-{{ loop.index0 }}">
-  <div class="panel">
-    {% if d.get('error') %}
-      <div class="error">Error: {{ d.error }}</div>
-    {% elif d.rows|length == 0 %}
-      <div class="empty">No rows in this sheet.</div>
-    {% else %}
-    <div class="scroll">
-    <table>
-      <tbody>
-        {% for item in d.diff_items %}
-          {% if item.type == 'hunk' %}
-          <tr class="hunk">
-            <td class="gutter"></td><td class="gutter"></td><td class="marker"></td>
-            <td class="content">@@ -{{ item.old_line }} +{{ item.new_line }} @@</td>
-          </tr>
-          {% elif item.type == 'fold' %}
-          <tr class="fold" onclick="toggleFold(this)">
-            <td class="gutter"></td><td class="gutter"></td><td class="marker"></td>
-            <td class="content"><span class="fold-icon">&#9656;</span>{{ item.count }} unchanged row{{ 's' if item.count != 1 else '' }}</td>
-          </tr>
-          {% for row in item.rows %}
-            <tr class="hidden-row">
-              <td class="gutter old">{{ row.old_line or '' }}</td>
-              <td class="gutter new">{{ row.new_line or '' }}</td>
-              <td class="marker"></td>
-              <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ (row.left or row.right).get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
-            </tr>
-          {% endfor %}
-          {% elif item.type == 'row' %}
-            {% set row = item.row %}
-            {% if row.status == 'unchanged' %}
-            <tr>
-              <td class="gutter old">{{ row.old_line }}</td>
-              <td class="gutter new">{{ row.new_line }}</td>
-              <td class="marker"></td>
-              <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
-            </tr>
-            {% elif row.status == 'removed' %}
-            <tr class="line-del">
-              <td class="gutter old">{{ row.old_line }}</td>
-              <td class="gutter new"></td>
-              <td class="marker">-</td>
-              <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
-            </tr>
-            {% elif row.status == 'added' %}
-            <tr class="line-add">
-              <td class="gutter old"></td>
-              <td class="gutter new">{{ row.new_line }}</td>
-              <td class="marker">+</td>
-              <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
-            </tr>
-            {% else %}
-            <tr class="line-del">
-              <td class="gutter old">{{ row.old_line }}</td>
-              <td class="gutter new"></td>
-              <td class="marker">-</td>
-              <td class="content">{% for c in d.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
-            </tr>
-            <tr class="line-add">
-              <td class="gutter old"></td>
-              <td class="gutter new">{{ row.new_line }}</td>
-              <td class="marker">+</td>
-              <td class="content">{% for c in d.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
-            </tr>
-            {% endif %}
+  {% for pair in pairs %}
+  <div class="pane {{ 'active' if loop.first else '' }}" id="pair-{{ loop.index0 }}">
+    <nav class="tabs">
+      {% for sheet_name, d in pair.sheets.items() %}
+        <button class="tab {{ 'active' if loop.first else '' }}" onclick="showSheet(this, '{{ loop.index0 }}')">
+          {{ sheet_name }}
+          {% if d.sheet_status == 'added' %}<span class="sheet-badge added">NEW</span>{% endif %}
+          {% if d.sheet_status == 'removed' %}<span class="sheet-badge removed">DELETED</span>{% endif %}
+          {% if d.added or d.removed or d.modified %}
+            <span class="cnt">
+              {% if d.added or d.modified %}<span class="add">+{{ d.added + d.modified }}</span>{% endif %}
+              {% if d.removed or d.modified %}<span class="del">-{{ d.removed + d.modified }}</span>{% endif %}
+            </span>
           {% endif %}
-        {% endfor %}
-      </tbody>
-    </table>
-    </div>
-    {% endif %}
+        </button>
+      {% endfor %}
+    </nav>
+
+    {% for sheet_name, d in pair.sheets.items() %}
+    <section class="pane {{ 'active' if loop.first else '' }}" data-sheet-pane>
+      <div class="panel">
+        {% if d.sheet_status == 'added' %}
+          <div class="sheet-banner">Sheet <b>{{ sheet_name }}</b> was added in {{ pair.right_name }}.</div>
+        {% elif d.sheet_status == 'removed' %}
+          <div class="sheet-banner">Sheet <b>{{ sheet_name }}</b> was deleted (present only in {{ pair.left_name }}).</div>
+        {% endif %}
+        {% if d.get('error') %}
+          <div class="error">Error: {{ d.error }}</div>
+        {% elif d.rows|length == 0 %}
+          <div class="empty">No rows in this sheet.</div>
+        {% else %}
+        <div class="scroll">
+        <table><tbody>
+          {% for item in d.diff_items %}
+            {% if item.type == 'hunk' %}
+            <tr class="hunk">
+              <td class="gutter"></td><td class="gutter"></td><td class="marker"></td>
+              <td class="content">@@ -{{ item.old_line }} +{{ item.new_line }} @@</td>
+            </tr>
+            {% elif item.type == 'fold' %}
+            <tr class="fold" onclick="toggleFold(this)">
+              <td class="gutter"></td><td class="gutter"></td><td class="marker"></td>
+              <td class="content"><span class="fold-icon">&#9656;</span>{{ item.count }} unchanged row{{ 's' if item.count != 1 else '' }}</td>
+            </tr>
+            {% for row in item.rows %}
+              <tr class="hidden-row">
+                <td class="gutter old">{{ row.old_line or '' }}</td>
+                <td class="gutter new">{{ row.new_line or '' }}</td>
+                <td class="marker"></td>
+                <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ (row.left or row.right).get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+              </tr>
+            {% endfor %}
+            {% elif item.type == 'row' %}
+              {% set row = item.row %}
+              {% if row.status == 'unchanged' %}
+              <tr>
+                <td class="gutter old">{{ row.old_line }}</td>
+                <td class="gutter new">{{ row.new_line }}</td>
+                <td class="marker"></td>
+                <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+              </tr>
+              {% elif row.status == 'removed' %}
+              <tr class="line-del">
+                <td class="gutter old">{{ row.old_line }}</td>
+                <td class="gutter new"></td>
+                <td class="marker">-</td>
+                <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+              </tr>
+              {% elif row.status == 'added' %}
+              <tr class="line-add">
+                <td class="gutter old"></td>
+                <td class="gutter new">{{ row.new_line }}</td>
+                <td class="marker">+</td>
+                <td class="content">{% for c in d.columns %}<span class="seg"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+              </tr>
+              {% else %}
+              <tr class="line-del">
+                <td class="gutter old">{{ row.old_line }}</td>
+                <td class="gutter new"></td>
+                <td class="marker">-</td>
+                <td class="content">{% for c in d.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ row.left.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+              </tr>
+              <tr class="line-add">
+                <td class="gutter old"></td>
+                <td class="gutter new">{{ row.new_line }}</td>
+                <td class="marker">+</td>
+                <td class="content">{% for c in d.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ row.right.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}</td>
+              </tr>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </tbody></table>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    {% endfor %}
   </div>
-</section>
-{% endfor %}
+  {% endfor %}
+</div>
+
+<!-- ============ SPLIT VIEW ============ -->
+<div class="view-root" id="view-split">
+  <nav class="tabs" id="split-tabs">
+    {% for sheet_name in all_sheets %}
+      {% set g = multi_sheets[sheet_name] %}
+      <button class="tab {{ 'active' if loop.first else '' }}" onclick="showSplitSheet('{{ loop.index0 }}')">
+        {{ sheet_name }}
+        {% if g.diff_rows %}<span class="cnt"><span class="del">~{{ g.diff_rows }}</span></span>{% endif %}
+        {% if g.present and not (g.present | select | list | length == g.present | length) %}
+          <span class="sheet-badge removed">PARTIAL</span>
+        {% endif %}
+      </button>
+    {% endfor %}
+  </nav>
+
+  {% for sheet_name in all_sheets %}
+  {% set g = multi_sheets[sheet_name] %}
+  <section class="pane {{ 'active' if loop.first else '' }}" id="split-sheet-{{ loop.index0 }}">
+    <div class="panel">
+      {% if g.get('error') %}
+        <div class="error">Error: {{ g.error }}</div>
+      {% elif g.rows|length == 0 %}
+        <div class="empty">No rows in this sheet.</div>
+      {% else %}
+      <div class="scroll">
+      <table>
+        <thead>
+        <tr class="group-head">
+          <th class="gutter" style="position:sticky;left:0;"></th>
+          {% for n in file_names %}
+            <th class="{{ 'base' if loop.first else '' }}">{{ n }}{% if loop.first %} (base){% endif %}</th>
+            {% if not loop.last %}<th class="file-sep"></th>{% endif %}
+          {% endfor %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in g.rows %}
+          <tr class="{{ 'row-diff' if row.status == 'diff' else '' }}">
+            <td class="gutter">{{ row.line if row.line is number else row.line }}</td>
+            {% for val in row.cells %}
+              {% set fi = loop.index0 %}
+              {% if val is none %}
+                <td class="miss" colspan="1">{{ '(sheet missing)' if not g.present[fi] else '(row missing)' }}</td>
+              {% else %}
+                <td class="{{ 'cell-base' if fi == 0 else '' }} {{ 'cell-diff' if row.status == 'diff' else '' }}">
+                  {% for c in g.columns %}<span class="seg{{ ' hl' if c in row.changed else '' }}"><span class="col-name">{{ c }}:</span> {{ val.get(c, '') }}</span>{% if not loop.last %}  {% endif %}{% endfor %}
+                </td>
+              {% endif %}
+              {% if not loop.last %}<td class="file-sep"></td>{% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
 
 <script>
-  function showSheet(idx) {
-    document.querySelectorAll('.sheet').forEach(function(el) { el.classList.remove('active'); });
-    document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
-    document.getElementById('sheet-' + idx).classList.add('active');
-    document.querySelectorAll('.tab')[idx].classList.add('active');
+  function showView(name) {
+    document.getElementById('view-unified').classList.toggle('active', name === 'unified');
+    document.getElementById('view-split').classList.toggle('active', name === 'split');
+    document.getElementById('btn-unified').classList.toggle('active', name === 'unified');
+    document.getElementById('btn-split').classList.toggle('active', name === 'split');
+  }
+  function showPair(idx) {
+    document.querySelectorAll('#pair-tabs .tab').forEach(function (el, i) { el.classList.toggle('active', String(i) === String(idx)); });
+    document.querySelectorAll('#view-unified > .pane').forEach(function (el) { el.classList.remove('active'); });
+    document.getElementById('pair-' + idx).classList.add('active');
+  }
+  function showSheet(btn, idx) {
+    const nav = btn.closest('nav');
+    const panesContainer = nav.parentElement;
+    nav.querySelectorAll('.tab').forEach(function (el) { el.classList.remove('active'); });
+    btn.classList.add('active');
+    panesContainer.querySelectorAll('[data-sheet-pane]').forEach(function (el, i) {
+      el.classList.toggle('active', String(i) === String(idx));
+    });
+  }
+  function showSplitSheet(idx) {
+    document.querySelectorAll('#split-tabs .tab').forEach(function (el, i) { el.classList.toggle('active', String(i) === String(idx)); });
+    document.querySelectorAll('#view-split > .pane').forEach(function (el, i) { el.classList.toggle('active', String(i) === String(idx)); });
   }
   function toggleFold(el) {
     el.classList.toggle('expanded');
@@ -236,6 +342,23 @@
       row = row.nextElementSibling;
     }
   }
+  function applyTheme(t) {
+    if (t) document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('xldiff-theme', next); } catch (e) {}
+    applyTheme(next);
+  }
+  (function () {
+    try {
+      const saved = localStorage.getItem('xldiff-theme');
+      if (saved) applyTheme(saved);
+    } catch (e) {}
+  })();
 </script>
 </body>
 </html>

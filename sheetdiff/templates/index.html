@@ -8,109 +8,118 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f8fa;
-    --card: #ffffff;
-    --border: #d0d7de;
-    --text: #1f2328;
-    --muted: #656d76;
-    --accent: #2563eb;
-    --accent-dark: #1d4ed8;
-    --radius: 12px;
+    --bg: #f6f8fa; --bg-page: #eef2ff; --card: #ffffff; --border: #d0d7de;
+    --text: #1f2328; --muted: #656d76; --accent: #2563eb; --accent-dark: #1d4ed8;
+    --radius: 12px; --del-fg: #cf222e; --add-fg: #1a7f37;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1117; --bg-page: #0d1117; --card: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --accent-dark: #388bfd;
+    --del-fg: #f85149; --add-fg: #3fb950;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1117; --bg-page: #0d1117; --card: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff; --accent-dark: #388bfd;
+      --del-fg: #f85149; --add-fg: #3fb950;
+    }
   }
   * { box-sizing: border-box; }
   body {
     font-family: 'Inter', -apple-system, Segoe UI, sans-serif;
-    background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 320px);
-    color: var(--text);
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg) 320px);
+    color: var(--text); margin: 0; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .theme-toggle {
+    position: fixed; top: 16px; right: 16px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px;
+    cursor: pointer; font-size: 13px; color: var(--text);
   }
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 8px 24px rgba(140, 149, 159, 0.15);
-    padding: 40px;
-    width: 100%;
-    max-width: 480px;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15); padding: 40px; width: 100%; max-width: 520px;
   }
   .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
   .logo-badge {
     width: 34px; height: 34px; border-radius: 8px;
     background: linear-gradient(135deg, #2563eb, #7c3aed);
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-weight: 700; font-size: 15px;
+    display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 15px;
   }
   h1 { font-size: 20px; margin: 0; }
   .sub { color: var(--muted); font-size: 14px; margin: 6px 0 28px; }
   .drop {
-    border: 1.5px dashed var(--border);
-    border-radius: 10px;
-    padding: 18px;
-    transition: border-color .15s, background .15s;
+    border: 1.5px dashed var(--border); border-radius: 10px; padding: 16px;
   }
-  .drop:hover { border-color: var(--accent); background: #f8faff; }
-  label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 20px; }
-  label span.tag {
-    display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px;
-    border-radius: 999px; margin-left: 6px; color: white;
+  .file-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .file-row input[type=file] {
+    flex: 1; font-size: 13px; padding: 8px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--bg); color: var(--text);
   }
-  .tag.base { background: #cf222e; }
-  .tag.compare { background: #1a7f37; }
-  input[type=file] {
-    display: block; margin-top: 8px; width: 100%; font-size: 13px;
-    padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: #fff;
+  .file-row .badge {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; color: white; min-width: 42px; text-align: center;
   }
+  .file-row:nth-child(1) .badge { background: var(--del-fg); }
+  .file-row:not(:first-child) .badge { background: var(--add-fg); }
+  .remove-file {
+    border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px;
+  }
+  .remove-file:hover { color: var(--del-fg); }
+  .add-file {
+    margin-top: 4px; background: transparent; border: 1px dashed var(--border); color: var(--accent);
+    padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;
+  }
+  .add-file:hover { border-color: var(--accent); }
+  label { display: block; font-weight: 600; font-size: 13px; }
   input[type=text] {
     display: block; margin-top: 8px; width: 100%; padding: 9px 12px;
-    border: 1px solid var(--border); border-radius: 8px; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text);
   }
   input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   .field { margin-top: 18px; }
-  .field-label { font-weight: 600; font-size: 13px; }
   .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  button {
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 20px; font-weight: 500; font-size: 13px; cursor: pointer; }
+  .check input { width: auto; margin: 0; }
+  button[type=submit] {
     margin-top: 28px; width: 100%;
     background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     color: white; border: 0; padding: 12px 16px; border-radius: 9px;
     font-size: 14px; font-weight: 600; cursor: pointer;
     box-shadow: 0 2px 6px rgba(37,99,235,.35);
-    transition: transform .1s, box-shadow .15s;
   }
-  button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.45); }
-  button:active { transform: translateY(0); }
+  button[type=submit]:hover { filter: brightness(1.05); }
 </style>
 </head>
 <body>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">&#9728;&#65039; / &#127769;</button>
   <div class="card">
     <div class="logo">
       <div class="logo-badge">X</div>
       <h1>xl-diff</h1>
     </div>
-    <p class="sub">Compare two spreadsheets with a GitHub-style split diff.</p>
+    <p class="sub">Compare two or more spreadsheets with a GitHub-style diff.</p>
 
     <form action="/diff" method="post" enctype="multipart/form-data">
-      <div class="drop">
-        <label>Base file <span class="tag base">OLD</span>
-          <input type="file" name="left" accept=".xlsx,.xls,.xlsm,.csv" required>
-        </label>
-        <label style="margin-bottom:0">Compare file <span class="tag compare">NEW</span>
-          <input type="file" name="right" accept=".xlsx,.xls,.xlsm,.csv" required>
-        </label>
+      <div class="drop" id="fileList">
+        <div class="file-row">
+          <span class="badge">BASE</span>
+          <input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" required>
+        </div>
+        <div class="file-row">
+          <span class="badge">v2</span>
+          <input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" required>
+        </div>
       </div>
+      <button type="button" class="add-file" onclick="addFile()">+ Add another file</button>
 
-      <label style="display:flex;align-items:center;gap:8px;margin-top:20px;font-weight:500;font-size:13px;cursor:pointer;">
-        <input type="checkbox" name="header" value="1" style="width:auto;margin:0;">
+      <label class="check">
+        <input type="checkbox" name="header" value="1">
         First row is a header
       </label>
-      <div class="hint" style="margin-top:2px;">Off by default: every row is diffed as data (columns shown as A, B, C...), so no row is ever hidden.</div>
+      <div class="hint">Off by default: every row is diffed as data (columns shown as A, B, C...).</div>
 
       <div class="field">
-        <div class="field-label">Row key column <span style="font-weight:400;color:var(--muted)">(optional)</span></div>
+        <label>Row key column <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
         <input type="text" name="key" placeholder="header name, or A/B/C if no header">
         <div class="hint">Matches rows by this column's value instead of row position.</div>
       </div>
@@ -118,5 +127,35 @@
       <button type="submit">Compare files</button>
     </form>
   </div>
+
+<script>
+  function addFile() {
+    const list = document.getElementById('fileList');
+    const row = document.createElement('div');
+    row.className = 'file-row';
+    const n = list.children.length + 1;
+    row.innerHTML = '<span class="badge">v' + n + '</span>' +
+      '<input type="file" name="files" accept=".xlsx,.xls,.xlsm,.csv" required>' +
+      '<button type="button" class="remove-file" onclick="this.parentElement.remove()">&times;</button>';
+    list.appendChild(row);
+  }
+  function applyTheme(t) {
+    if (t) document.documentElement.setAttribute('data-theme', t);
+    else document.documentElement.removeAttribute('data-theme');
+  }
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('xldiff-theme', next); } catch (e) {}
+    applyTheme(next);
+  }
+  (function () {
+    try {
+      const saved = localStorage.getItem('xldiff-theme');
+      if (saved) applyTheme(saved);
+    } catch (e) {}
+  })();
+</script>
 </body>
 </html>

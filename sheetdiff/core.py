@@ -25,11 +25,30 @@ def _col_letter(n: int) -> str:
         s = chr(65 + rem) + s
     return s
 
+def _trim_grid(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop trailing all-empty columns/rows.
+
+    Excel files often advertise a "used range" far larger than the actual data
+    (leftover formatting on empty cells), which otherwise shows up as an
+    unbounded number of phantom empty columns/rows in the diff.
+    """
+    if df.empty:
+        return df
+    mask = df.notna() & df.astype(str).apply(lambda s: s.str.strip() != "")
+    col_has = mask.any(axis=0)
+    row_has = mask.any(axis=1)
+    if not col_has.any() or not row_has.any():
+        return df.iloc[0:0, 0:0]
+    last_col = col_has[col_has].index.max()
+    last_row = row_has[row_has].index.max()
+    return df.loc[:last_row, :last_col]
+
 def _load_grid(path: str, sheet_name: Optional[str] = None, header: bool = False) -> pd.DataFrame:
     """Load a sheet as a raw cell grid (no assumed header row) unless header=True.
 
     Every spreadsheet row becomes a data row, and columns are labelled A, B, C...
     matching real Excel column letters, so line numbers line up with actual rows.
+    Trailing empty columns/rows (a common Excel "used range" artifact) are trimmed.
     """
     is_excel = str(path).lower().endswith(('.xls', '.xlsx', '.xlsm'))
     read_header = 0 if header else None
@@ -37,6 +56,7 @@ def _load_grid(path: str, sheet_name: Optional[str] = None, header: bool = False
         df = pd.read_excel(path, sheet_name=sheet_name if sheet_name is not None else 0, dtype=object, header=read_header)
     else:
         df = pd.read_csv(path, dtype=object, header=read_header)
+    df = _trim_grid(df)
     if not header:
         df.columns = [_col_letter(i) for i in range(len(df.columns))]
     return df
@@ -169,18 +189,30 @@ def compare_workbooks(left: str, right: str, key: Optional[str] = None) -> Dict[
 
     return diff_workbook(left, right, key=key)
 
-def diff_rows_full(left: str, right: str, key: Optional[str] = None, sheet_name: Optional[str] = None, header: bool = False) -> Dict[str, Any]:
+def diff_rows_full(
+    left: str,
+    right: str,
+    key: Optional[str] = None,
+    sheet_name: Optional[str] = None,
+    header: bool = False,
+    left_exists: bool = True,
+    right_exists: bool = True,
+) -> Dict[str, Any]:
     """Full row-level diff for GitHub-style rendering.
 
     By default every spreadsheet row is treated as data (no assumed header row),
     so line numbers match real Excel row numbers and columns are labelled A, B, C...
     Pass header=True to treat row 1 as column names instead (then `key` is a column name).
 
+    left_exists/right_exists: pass False when the sheet is entirely absent from
+    that workbook (e.g. a sheet that was added or deleted) - every row of the
+    other side is then reported as added/removed rather than raising.
+
     Returns {"columns": [...], "rows": [{"status": "unchanged"|"added"|"removed"|"modified",
     "left": {col: val}, "right": {col: val}, "changed": [col, ...]}, ...]}.
     """
-    L = _norm(_load_grid(left, sheet_name, header=header))
-    R = _norm(_load_grid(right, sheet_name, header=header))
+    L = _norm(_load_grid(left, sheet_name, header=header)) if left_exists else pd.DataFrame()
+    R = _norm(_load_grid(right, sheet_name, header=header)) if right_exists else pd.DataFrame()
     columns = list(dict.fromkeys(list(L.columns) + list(R.columns)))
     rows: List[Dict[str, Any]] = []
 
@@ -228,6 +260,72 @@ def diff_rows_full(left: str, right: str, key: Optional[str] = None, sheet_name:
 
     return {"columns": columns, "rows": rows}
 
+
+def diff_multi_grid(
+    paths: List[str],
+    present: List[bool],
+    key: Optional[str] = None,
+    sheet_name: Optional[str] = None,
+    header: bool = False,
+) -> Dict[str, Any]:
+    """N-way row-aligned comparison across several files, for a side-by-side split view.
+
+    `present[i]` is False when this sheet doesn't exist in paths[i] at all.
+    The first file with the sheet present is the baseline; any other file's
+    cell that differs from the baseline value (when both have the row) is flagged.
+
+    Returns {"columns": [...], "rows": [{"line": n, "status": "same"|"diff",
+    "values": [dict|None, ...], "changed": [set of col per file index], "missing": [bool,...]}]}.
+    """
+    frames = []
+    for p, ok in zip(paths, present):
+        frames.append(_norm(_load_grid(p, sheet_name, header=header)) if ok else pd.DataFrame())
+
+    columns: List[str] = []
+    for f in frames:
+        for c in f.columns:
+            if c not in columns:
+                columns.append(c)
+
+    def row_dict(row, key_val=None) -> Dict[str, str]:
+        d = {c: str(row.get(c, "")) for c in columns}
+        if key_val is not None and key:
+            d[key] = str(key_val)
+        return d
+
+    rows: List[Dict[str, Any]] = []
+    use_key = bool(key) and any(key in f.columns for f in frames if not f.empty)
+
+    if use_key:
+        indexed = [f.set_index(key) if (not f.empty and key in f.columns) else f for f in frames]
+        all_keys = sorted({k for f in indexed for k in (f.index if not f.empty else [])})
+        for k in all_keys:
+            values = []
+            for f in indexed:
+                has = (not f.empty) and (k in getattr(f, "index", []))
+                values.append(row_dict(f.loc[k], k) if has else None)
+            rows.append(_build_multi_row(k, values, columns))
+    else:
+        maxr = max((len(f) for f in frames), default=0)
+        for i in range(maxr):
+            values = [row_dict(f.iloc[i]) if i < len(f) else None for f in frames]
+            rows.append(_build_multi_row(i, values, columns))
+
+    return {"columns": columns, "rows": rows, "file_count": len(paths)}
+
+def _build_multi_row(idx, values: List[Optional[Dict[str, str]]], columns: List[str]) -> Dict[str, Any]:
+    baseline = next((v for v in values if v is not None), None)
+    changed = set()
+    if baseline is not None:
+        for v in values:
+            if v is None:
+                continue
+            for c in columns:
+                if v.get(c, "") != baseline.get(c, ""):
+                    changed.add(c)
+    missing = [v is None for v in values]
+    status = "diff" if changed or any(missing) else "same"
+    return {"line": idx, "status": status, "cells": values, "changed": sorted(changed), "missing": missing, "baseline": baseline}
 
 def format_unified(changes: List[Change]) -> str:
     out: List[str] = []
