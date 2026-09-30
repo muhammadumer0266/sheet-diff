@@ -3,7 +3,33 @@
 
 Minimal, efficient spreadsheet diff tool. Load CSV/XLSX and produce unified +/- row and cell diffs.
 
-Install
+## Run locally from a clone (web UI)
+
+If you just want to clone the repo and use the web UI on your own machine, without publishing to PyPI:
+
+```bash
+git clone https://github.com/muhammadumer0266/xl-diff.git
+cd xl-diff
+
+# Create and activate a virtualenv
+python -m venv .venv
+# macOS/Linux:
+source .venv/bin/activate
+# Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+
+# Install the package in editable mode with the web extra
+pip install -e ".[web]"
+
+# Start the web server
+xldiff-web
+```
+
+Then open http://localhost:5000, upload two spreadsheets (optionally a key column), and view a GitHub-style row/cell diff (green = added, red = removed, yellow = modified with old value struck through above the new one).
+
+The pure-Python (pandas-based) diff engine works out of the box after `pip install -e ".[web]"`. If you also want the faster Rust-backed engine, additionally run `maturin develop --release` (see "Building the Rust extension" below) before starting `xldiff-web`.
+
+## Install from PyPI
 
 ```
 pip install xl-diff
@@ -23,6 +49,15 @@ xldiff-web
 ```
 
 Open http://localhost:5000, upload two spreadsheets (optionally a key column), and view a GitHub-style row/cell diff (green = added, red = removed, yellow = modified with old value struck through above the new one).
+
+Remote storage (S3, MinIO, Cloudflare R2, Garage, Azure Blob)
+
+```
+pip install xl-diff[remote]
+sheetdiff s3://my-bucket/left.xlsx s3://my-bucket/right.xlsx --key id
+```
+
+Files can also be referenced by URI in the web UI (each row accepts an upload *or* a URI) and from the Python API via `sheetdiff.resolve_source`. Credentials and per-backend endpoints are configured once via environment variables, never through the web form — see [docs/REMOTE_STORAGE.md](docs/REMOTE_STORAGE.md) for the full list, plus how to configure upload/remote size limits (`SHEETDIFF_MAX_UPLOAD_MB`, `SHEETDIFF_MAX_REMOTE_MB`, `SHEETDIFF_MAX_FILES`).
 
 Python API
 
@@ -61,18 +96,11 @@ Features
 - Python bindings (PyO3) for seamless integration.
 - Cross-platform packaging with `maturin` and GitHub Actions.
 
-Quick start (developer)
+## Building the Rust extension
+
+The package prefers a Rust-backed binary extension (`xl_diff`, faster and more memory-efficient) when available, falling back to the pure-Python implementation otherwise. To build it in-place inside your virtualenv:
 
 ```bash
-# Clone
-git clone https://github.com/muhammadumer0266/xl-diff.git
-cd xl-diff
-
-# Create virtualenv
-python -m venv .venv
-source .venv/bin/activate
-
-# Install maturin and build the extension in-place
 pip install maturin
 maturin develop --release
 ```

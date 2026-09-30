@@ -114,3 +114,19 @@ This list enumerates edge, failure, and worst-case scenarios to exercise the spr
 110. Files with invalid XML characters in shared strings.
 
 Use these scenarios to design unit, integration and fuzz-style monkey tests. Prioritize safety tests (zip bomb, corrupted XML), correctness tests (keyed/positional alignment, merged cells), and performance tests (large sheets, many edits). Automate a subset as PyTest parametrized cases and record failure modes.
+
+## Remote storage (S3/MinIO/R2/Garage/Azure Blob) — additional cases
+
+Covered by `sheetdiff/storage.py`, `sheetdiff/config.py`, and `tests/test_storage.py`.
+
+111. Remote object reports a small size in metadata but streams far more bytes ("lying" size header) — must still be capped, not just checked once up front. **Handled**: streaming cap in `fetch_to_local` on top of the upfront `fs.info()` check.
+112. Web request used to smuggle an arbitrary `http://`/`https://` URL, turning the diff endpoint into an SSRF proxy against internal services. **Handled**: only an explicit scheme allow-list is ever dispatched remotely.
+113. Windows local path (`C:\foo\bar.xlsx`) misparsed as a URI scheme because of the drive-letter colon. **Handled**: scheme detection requires a literal `://`.
+114. Remote credentials supplied via a web form field, letting one user reach into another tenant's bucket. **Handled**: credentials only ever come from server-side environment variables, never from request data.
+115. `remote` extra (`fsspec`/`s3fs`/`adlfs`) not installed — should fail with an actionable message, not a raw `ImportError` traceback. **Handled**: `MissingDependencyError` names the pip extra to install.
+116. One file in a multi-file (N-way) request resolves fine, a later one fails (too large / not found / bad scheme) — earlier remote downloads must not leak on disk. **Handled**: `resolve_many` cleans up everything it downloaded on any failure.
+117. Network stall on a remote read (dead connection, backend hung) — should time out rather than hang the request indefinitely. **Handled**: `SHEETDIFF_REMOTE_CONNECT_TIMEOUT` / `SHEETDIFF_REMOTE_READ_TIMEOUT`.
+118. Operator wants several S3-compatible backends configured simultaneously (e.g. AWS S3 *and* an internal MinIO) with different credentials/endpoints. **Handled**: per-scheme env var prefixes (`SHEETDIFF_STORAGE_MINIO_*`, `SHEETDIFF_STORAGE_R2_*`, ...).
+119. Deployment wants remote storage disabled entirely even with the extra installed. **Handled**: `SHEETDIFF_ALLOWED_SCHEMES=` (empty).
+120. A very large *upload* (not remote) should be rejected before it consumes the whole request body. **Handled**: `MAX_CONTENT_LENGTH` driven by `SHEETDIFF_MAX_UPLOAD_MB`, with a friendly 413 handler instead of Flask's default error page.
+121. Many files submitted at once (N-way split view) — unbounded N risks memory/CPU exhaustion on a shared server. **Handled**: `SHEETDIFF_MAX_FILES` caps the request before any file is touched.
