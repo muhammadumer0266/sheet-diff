@@ -1,14 +1,23 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "xl-diff"
 version = "0.1.0"
-description = "Concise spreadsheet diff utility (CSV/XLSX)"
+description = "Concise spreadsheet diff utility (CSV/XLSX) with an optional GitHub/VS Code-style web UI"
 readme = "README.md"
 requires-python = ">=3.10"
-authors = [ { name = "Muhammad Umer" } ]
+authors = [ { name = "Muhammad Umer", email = "muhammadumer0266@gmail.com" } ]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business",
+    "Topic :: Utilities",
+]
 dependencies = ["pandas>=1.5", "openpyxl>=3.0"]
 
 [project.optional-dependencies]
@@ -16,8 +25,16 @@ web = ["flask>=2.0"]
 remote = ["fsspec>=2023.1", "s3fs>=2023.1", "adlfs>=2023.1"]
 all = ["xl-diff[web,remote]"]
 
+[project.urls]
+Homepage = "https://github.com/muhammadumer0266/xl-diff"
+Repository = "https://github.com/muhammadumer0266/xl-diff"
+Issues = "https://github.com/muhammadumer0266/xl-diff/issues"
+
 [project.scripts]
 xldiff-web = "sheetdiff.webapp:main"
 
 [tool.setuptools.packages.find]
 include = ["sheetdiff", "sheetdiff.*"]
+
+[tool.setuptools.package-data]
+sheetdiff = ["templates/*.html"]
