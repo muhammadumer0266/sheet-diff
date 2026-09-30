@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sheetdiff"
-version = "0.1.0"
+version = "0.2.0"
 description = "Concise spreadsheet diff utility (CSV/XLSX) with an optional GitHub/VS Code-style web UI"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -21,14 +21,15 @@ classifiers = [
 dependencies = ["pandas>=1.5", "openpyxl>=3.0"]
 
 [project.optional-dependencies]
+cli = []
 web = ["flask>=2.0"]
 remote = ["fsspec>=2023.1", "s3fs>=2023.1", "adlfs>=2023.1"]
 all = ["sheetdiff[web,remote]"]
 
 [project.urls]
-Homepage = "https://github.com/muhammadumer0266/xl-diff"
-Repository = "https://github.com/muhammadumer0266/xl-diff"
-Issues = "https://github.com/muhammadumer0266/xl-diff/issues"
+Homepage = "https://github.com/muhammadumer0266/sheet-diff"
+Repository = "https://github.com/muhammadumer0266/sheet-diff"
+Issues = "https://github.com/muhammadumer0266/sheet-diff/issues"
 
 [project.scripts]
 xldiff-web = "sheetdiff.webapp:main"
