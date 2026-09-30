@@ -29,10 +29,10 @@ Then open http://localhost:5000, upload two spreadsheets (optionally a key colum
 
 The pure-Python (pandas-based) diff engine works out of the box after `pip install -e ".[web]"`. If you also want the faster Rust-backed engine, additionally run `maturin develop --release` (see "Building the Rust extension" below) before starting `xldiff-web`.
 
-## Install from PyPI
+## Install from PyPI (distributed as `sheetdiff`)
 
 ```
-pip install xl-diff
+pip install sheetdiff
 ```
 
 Quick CLI
@@ -44,7 +44,7 @@ python -m sheetdiff.cli left.xlsx right.xlsx --key id
 Web UI (GitHub-style diff viewer)
 
 ```
-pip install xl-diff[web]
+pip install sheetdiff[web]
 xldiff-web
 ```
 
@@ -53,7 +53,7 @@ Open http://localhost:5000, upload two spreadsheets (optionally a key column), a
 Remote storage (S3, MinIO, Cloudflare R2, Garage, Azure Blob)
 
 ```
-pip install xl-diff[remote]
+pip install sheetdiff[remote]
 sheetdiff s3://my-bucket/left.xlsx s3://my-bucket/right.xlsx --key id
 ```
 
@@ -83,7 +83,7 @@ Integration notes
 
 [![CI](https://github.com/muhammadumer0266/xl-diff/actions/workflows/CI.yml/badge.svg)](https://github.com/muhammadumer0266/xl-diff/actions/workflows/CI.yml)
 [![crates.io](https://img.shields.io/crates/v/xl_diff.svg)](https://crates.io/crates/xl_diff)
-[![PyPI](https://img.shields.io/pypi/v/xl-diff.svg)](https://pypi.org/project/xl-diff/)
+[![PyPI](https://img.shields.io/pypi/v/sheetdiff.svg)](https://pypi.org/project/sheetdiff/)
 [![Language](https://img.shields.io/badge/Language-Rust%20%2F%20Python-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 

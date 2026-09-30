@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xl-diff"
+name = "sheetdiff"
 version = "0.1.0"
 description = "Concise spreadsheet diff utility (CSV/XLSX) with an optional GitHub/VS Code-style web UI"
 readme = "README.md"
@@ -23,7 +23,7 @@ dependencies = ["pandas>=1.5", "openpyxl>=3.0"]
 [project.optional-dependencies]
 web = ["flask>=2.0"]
 remote = ["fsspec>=2023.1", "s3fs>=2023.1", "adlfs>=2023.1"]
-all = ["xl-diff[web,remote]"]
+all = ["sheetdiff[web,remote]"]
 
 [project.urls]
 Homepage = "https://github.com/muhammadumer0266/xl-diff"
